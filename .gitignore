@@ -1,17 +1,46 @@
+# Environment
+.env
+.env.*
+!.env.example
+
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+.Python
 *.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+
+# Testing / coverage
 .pytest_cache/
+.coverage
+htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# Virtual environments
-.venv/
-venv/
+# Jupyter
+.ipynb_checkpoints/
 
-# Secrets / local config
-.env
-
-# OS
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
 .DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Database / local state
+*.db
+*.sqlite3
+postgres_data/

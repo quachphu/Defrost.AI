@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Defrost.AI — Your AI Real Estate Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #070d1a; --bg2: #0c1528; --card: #111827;
+      --border: #1e2d42; --primary: #3b82f6; --primary2: #2563eb;
+      --green: #10b981; --green2: #059669;
+      --text: #f1f5f9; --muted: #94a3b8; --muted2: #64748b;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text); overflow-x: hidden;
+    }
+
+    /* ── Keyframes ── */
+    @keyframes fadeUp  { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+    @keyframes pulse   { 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
+    @keyframes msIn    { from { opacity:0; transform:scale(.5); } to { opacity:1; transform:scale(1); } }
+    @keyframes imgIn   { from { opacity:0; transform:translateY(50px); } to { opacity:1; transform:translateY(0); } }
+
+    .reveal { opacity:0; transform:translateY(30px); transition:opacity .65s ease, transform .65s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+    .reveal-l { opacity:0; transform:translateX(-30px); transition:opacity .65s ease, transform .65s ease; }
+    .reveal-l.visible { opacity:1; transform:translateX(0); }
+    .reveal-r { opacity:0; transform:translateX(30px); transition:opacity .65s ease, transform .65s ease; }
+    .reveal-r.visible { opacity:1; transform:translateX(0); }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 62px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; background: rgba(7,13,26,.9); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+    .logo span { color: var(--green); }
+    .nav-actions { display: flex; gap: 10px; }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--text); }
+    .btn-primary-nav {
+      background: var(--primary2); border: none; color: #fff;
+      padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: background .2s;
+    }
+    .btn-primary-nav:hover { background: var(--primary); }
+
+    /* ──────────────────────────────────────
+       HERO  (matches demo layout exactly)
+    ────────────────────────────────────── */
+    .hero {
+      width: 100%; padding-top: 120px; padding-bottom: 0;
+      background: var(--bg);
+    }
+    .hero-inner {
+      /* container mx-auto flex flex-col items-center px-4 py-16 text-center md:py-24 */
+      max-width: 900px; margin: 0 auto;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 64px 24px 96px; text-align: center;
+    }
+    .hero-inner h1 {
+      /* text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl */
+      font-size: clamp(36px, 5.5vw, 72px);
+      font-weight: 800; line-height: 1.1; letter-spacing: -2px;
+      margin-bottom: 24px;
+      animation: fadeUp .7s ease .1s both;
+    }
+    /* bg-primary/20 p-2 rounded-md — the highlight box from the demo */
+    .hero-inner h1 .hl {
+      background: rgba(59,130,246,.2);
+      color: var(--primary);
+      padding: 4px 12px;
+      border-radius: 10px;
+      display: inline;
+    }
+    .hero-inner p {
+      /* mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl */
+      margin-top: 0; max-width: 640px;
+      font-size: clamp(16px, 1.8vw, 20px); color: var(--muted);
+      line-height: 1.75; margin-bottom: 36px;
+      animation: fadeUp .7s ease .25s both;
+    }
+    .hero-btns {
+      /* mt-8 flex flex-wrap justify-center gap-4 */
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+      animation: fadeUp .7s ease .4s both;
+    }
+    /* Button size="lg" default — from shadcn */
+    .btn-lg {
+      height: 44px; padding: 0 32px; border-radius: 8px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all .2s; white-space: nowrap; border: none;
+    }
+    .btn-filled {
+      background: var(--primary); color: #fff;
+      box-shadow: 0 2px 12px rgba(59,130,246,.35);
+    }
+    .btn-filled:hover { background: var(--primary2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,.4); }
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: var(--card); border-color: var(--primary); }
+
+    /* ──────────────────────────────────────
+       ANIMATED ROADMAP  (exact AnimatedRoadmap structure from demo)
+    ────────────────────────────────────── */
+    .roadmap-outer {
+      /* relative w-full max-w-4xl mx-auto py-24 */
+      position: relative; width: 100%; max-width: 900px;
+      margin: 0 auto; padding: 96px 24px;
+    }
+    /* absolute inset-0 top-10 — the map background image */
+    .roadmap-img-wrap {
+      position: absolute; inset: 0; top: 40px;
+      pointer-events: none;
+      animation: imgIn .8s ease .2s both;
+    }
+    .roadmap-img-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 20px; opacity: .18;
+      filter: saturate(.4) brightness(.6);
+    }
+    /* relative h-[400px] — the inner content area */
+    .roadmap-inner {
+      position: relative; height: 400px;
+    }
+    .roadmap-svg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    }
+    .roadmap-path {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 3;
+      stroke-linecap: round;
+      /* framer-motion uses dasharray "10 5" in the demo */
+      stroke-dasharray: 10 5;
+      /* stroke-dashoffset driven by JS scroll */
+    }
+
+    /* ── Milestone markers (MilestoneMarker component) ── */
+    .ms {
+      /* absolute flex items-center gap-4 */
+      position: absolute;
+      display: flex; align-items: center; gap: 16px;
+      /* animation: initial opacity 0 scale .5 → whileInView opacity 1 scale 1 */
+      opacity: 0; transform: scale(.5);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .ms.visible { opacity: 1; transform: scale(1); }
+
+    /* milestone positions from demo data */
+    .ms-1 { top: 70%; left:  5%; }
+    .ms-2 { top: 15%; left: 20%; }
+    .ms-3 { top: 45%; left: 55%; }
+    .ms-4 { top: 10%; right: 10%; }
+
+    /* relative flex h-8 w-8 items-center justify-center */
+    .ms-dot-outer {
+      position: relative; display: flex;
+      width: 32px; height: 32px;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    /* absolute h-3 w-3 rounded-full border-2 — the colored dot */
+    .ms-dot {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%; border: 2px solid;
+    }
+    .ms-dot.complete    { background: var(--green);   border-color: var(--green2); }
+    .ms-dot.inprogress  { background: var(--primary); border-color: var(--primary2); animation: pulse 1.8s infinite; }
+    .ms-dot.pending     { background: #334155;        border-color: #475569; }
+    /* absolute h-full w-full rounded-full bg-primary/10 — the ring */
+    .ms-ring {
+      position: absolute; inset: 0;
+      border-radius: 50%; background: rgba(59,130,246,.1);
+    }
+    /* rounded-full border bg-card px-4 py-2 text-sm font-medium text-card-foreground shadow-sm */
+    .ms-label {
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      padding: 8px 16px;
+      font-size: 14px; font-weight: 500; color: var(--text);
+      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      white-space: nowrap;
+    }
+
+    /* ──────────────────────────────────────
+       HOW IT WORKS
+    ────────────────────────────────────── */
+    .section-label {
+      font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--primary); margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 44px); font-weight: 900;
+      letter-spacing: -1px; line-height: 1.15; margin-bottom: 16px;
+    }
+    .section-sub { font-size: 17px; color: var(--muted); max-width: 520px; line-height: 1.7; margin-bottom: 64px; }
+
+    section.works { padding: 100px 24px; }
+    .how-container { max-width: 1100px; margin: 0 auto; }
+    .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+
+    .how-track {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; position: relative; overflow: hidden;
+    }
+    .how-track::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+    .how-track.buyer::before  { background: linear-gradient(90deg,#1d4ed8,var(--primary)); }
+    .how-track.seller::before { background: linear-gradient(90deg,var(--green2),var(--green)); }
+    .track-header { display:flex; align-items:center; gap:12px; margin-bottom:28px; }
+    .track-icon   { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+    .track-icon.buyer  { background:rgba(59,130,246,.15); }
+    .track-icon.seller { background:rgba(16,185,129,.15); }
+    .track-title  { font-size:18px; font-weight:800; }
+    .track-badge  { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; margin-left:auto; }
+    .track-badge.buyer  { background:rgba(59,130,246,.15); color:var(--primary); }
+    .track-badge.seller { background:rgba(16,185,129,.15); color:var(--green); }
+    .steps-list { display:flex; flex-direction:column; }
+    .step-item { display:flex; gap:16px; padding-bottom:24px; }
+    .step-item:last-child { padding-bottom:0; }
+    .step-item:last-child .step-line { display:none; }
+    .step-num-wrap { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
+    .step-num { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; }
+    .step-num.buyer  { background:var(--primary2); color:#fff; }
+    .step-num.seller { background:var(--green2);   color:#fff; }
+    .step-line { width:2px; flex:1; margin-top:6px; min-height:24px; }
+    .step-line.buyer  { background:rgba(59,130,246,.2); }
+    .step-line.seller { background:rgba(16,185,129,.2); }
+    .step-body  { padding-top:4px; }
+    .step-name  { font-size:15px; font-weight:700; margin-bottom:4px; }
+    .step-desc  { font-size:13px; color:var(--muted); line-height:1.6; }
+
+    /* ──────────────────────────────────────
+       LEGAL
+    ────────────────────────────────────── */
+    section.legal { padding:100px 24px; background:var(--bg2); }
+    .legal-container { max-width:1100px; margin:0 auto; }
+    .legal-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+    .legal-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px; }
+    .legal-icon  { font-size:28px; margin-bottom:14px; }
+    .legal-title { font-size:16px; font-weight:800; margin-bottom:10px; }
+    .legal-list  { list-style:none; display:flex; flex-direction:column; gap:8px; }
+    .legal-list li { font-size:13px; color:var(--muted); display:flex; gap:8px; line-height:1.5; }
+    .legal-list li::before { content:"→"; color:var(--green); font-weight:700; flex-shrink:0; }
+
+    /* ──────────────────────────────────────
+       CTA BAND
+    ────────────────────────────────────── */
+    section.cta-band {
+      padding:100px 24px; text-align:center;
+      background:linear-gradient(135deg,rgba(37,99,235,.1),rgba(16,185,129,.05));
+      border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    }
+    .cta-band h2 { font-size:clamp(28px,4vw,48px); font-weight:900; letter-spacing:-1px; margin-bottom:16px; }
+    .cta-band p  { font-size:18px; color:var(--muted); margin-bottom:40px; }
+    .cta-row { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+
+    /* ──────────────────────────────────────
+       FOOTER
+    ────────────────────────────────────── */
+    footer { text-align:center; padding:32px 24px; font-size:13px; color:var(--muted2); border-top:1px solid var(--border); }
+
+    /* ──────────────────────────────────────
+       MODALS
+    ────────────────────────────────────── */
+    .overlay {
+      display:none; position:fixed; inset:0; z-index:200;
+      background:rgba(0,0,0,.75); backdrop-filter:blur(4px);
+      align-items:center; justify-content:center; padding:16px;
+    }
+    .overlay.open { display:flex; animation:fadeIn .2s ease; }
+    .modal {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:20px; width:100%; max-width:440px;
+      padding:36px; position:relative;
+      animation:fadeUp .25s ease;
+      box-shadow:0 24px 80px rgba(0,0,0,.55);
+    }
+    .modal h2    { font-size:24px; font-weight:900; margin-bottom:6px; }
+    .modal .msub { font-size:14px; color:var(--muted); margin-bottom:28px; }
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+    .field label { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+    .field input {
+      background:var(--bg2); border:1.5px solid var(--border); color:var(--text);
+      padding:11px 14px; border-radius:8px; font-size:15px; outline:none;
+      transition:border-color .18s;
+    }
+    .field input:focus { border-color:var(--primary); }
+    .role-toggle { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px; }
+    .role-btn {
+      padding:12px; border-radius:10px; border:1.5px solid var(--border);
+      background:transparent; color:var(--muted); font-size:14px; font-weight:600;
+      cursor:pointer; transition:all .18s; text-align:center;
+    }
+    .role-btn.active.buyer  { background:rgba(59,130,246,.15); border-color:var(--primary2); color:var(--primary); }
+    .role-btn.active.seller { background:rgba(16,185,129,.15); border-color:var(--green2);   color:var(--green); }
+    .role-btn .ri { font-size:20px; display:block; margin-bottom:4px; }
+    .btn-submit {
+      width:100%; padding:13px; border-radius:10px; border:none;
+      background:linear-gradient(135deg,var(--primary2),var(--primary));
+      color:#fff; font-size:16px; font-weight:700; cursor:pointer;
+      margin-top:4px; transition:opacity .2s;
+    }
+    .btn-submit:disabled { opacity:.6; cursor:not-allowed; }
+    .modal-switch { text-align:center; margin-top:20px; font-size:13px; color:var(--muted); }
+    .modal-switch a { color:var(--primary); cursor:pointer; font-weight:600; }
+    .modal-switch a:hover { text-decoration:underline; }
+    .modal-err {
+      background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
+      color:#fca5a5; border-radius:8px; padding:10px 14px;
+      font-size:13px; margin-bottom:14px; display:none;
+    }
+    .modal-x {
+      position:absolute; top:16px; right:16px; width:32px; height:32px;
+      border-radius:50%; background:var(--border); border:none; color:var(--muted);
+      font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    }
+
+    /* ──────────────────────────────────────
+       RESPONSIVE
+    ────────────────────────────────────── */
+    @media(max-width:768px) {
+      nav { padding:0 20px; }
+      .how-grid { grid-template-columns:1fr; }
+      .legal-grid { grid-template-columns:1fr; }
+      .roadmap-inner { height:280px; }
+      .ms-label { font-size:12px; padding:6px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Defrost<span>.AI</span></div>
+  <div class="nav-actions">
+    <button class="btn-ghost" onclick="openModal('login')">Log in</button>
+    <button class="btn-primary-nav" onclick="openModal('signup')">Sign up free</button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════
+     HERO  — matches demo HeroSectionDemo
+════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-inner">
+    <h1>Navigate real estate with a <span class="hl">trusted AI agent</span></h1>
+    <p>
+      Tell us what you need once. Your personal AI agent searches, negotiates, and closes the deal on your behalf —
+      whether you're buying, renting, or listing a property. No commission. Always on.
+    </p>
+    <div class="hero-btns">
+      <button class="btn-lg btn-filled" onclick="openModal('signup','buyer')">Get started — it's free!</button>
+      <button class="btn-lg btn-outline" onclick="document.getElementById('roadmap').scrollIntoView({behavior:'smooth'})">See how it works</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       ANIMATED ROADMAP — AnimatedRoadmap component
+  ════════════════════════════════════ -->
+  <div id="roadmap" class="roadmap-outer" aria-label="Animated roadmap showing the Defrost.AI journey">
+
+    <!-- Background map image (absolute inset-0 top-10) -->
+    <div class="roadmap-img-wrap">
+      <img
+        src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&auto=format&fit=crop&q=60"
+        alt="Aerial city view"
+      />
+    </div>
+
+    <!-- relative h-[400px] inner content -->
+    <div class="roadmap-inner">
+
+      <!-- SVG path (pathLength animated on scroll) -->
+      <svg class="roadmap-svg" viewBox="0 0 800 400" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          id="ms-path"
+          class="roadmap-path"
+          d="M 50 350 Q 200 50 400 200 T 750 100"
+        />
+      </svg>
+
+      <!-- Milestone 1: Create Account (complete) -->
+      <div class="ms ms-1" data-delay="0">
+        <div class="ms-dot-outer">
+          <div class="ms-dot complete"></div>
+          <div class="ms-ring"></div>
+        </div>
+        <div class="ms-label">Create Account</div>
+      </div>
+
+      <!-- Milestone 2: List or Search (complete) -->
+      <div class="ms ms-2" data-delay="300">
+        <div class="ms-dot-outer">
+          <div class="ms-dot complete"></div>
+          <div class="ms-ring"></div>
+        </div>
+        <div class="ms-label">List or Search</div>
+      </div>
+
+      <!-- Milestone 3: Agents Negotiate (in-progress) -->
+      <div class="ms ms-3" data-delay="600">
+        <div class="ms-dot-outer">
+          <div class="ms-dot inprogress"></div>
+          <div class="ms-ring"></div>
+        </div>
+        <div class="ms-label">Agents Negotiate</div>
+      </div>
+
+      <!-- Milestone 4: Close the Deal (pending) -->
+      <div class="ms ms-4" data-delay="900">
+        <div class="ms-dot-outer">
+          <div class="ms-dot pending"></div>
+          <div class="ms-ring"></div>
+        </div>
+        <div class="ms-label">Close the Deal</div>
+      </div>
+
+    </div><!-- /roadmap-inner -->
+  </div><!-- /roadmap-outer -->
+</div><!-- /hero -->
+
+<!-- ════════════════════════════════════════
+     HOW IT WORKS
+════════════════════════════════════════ -->
+<section class="works">
+  <div class="how-container">
+    <div style="text-align:center;margin-bottom:64px;">
+      <div class="section-label reveal">How it works</div>
+      <div class="section-title reveal" style="transition-delay:.1s">Two agents. One seamless deal.</div>
+      <p class="section-sub reveal" style="margin:0 auto;transition-delay:.2s">
+        Every user gets a personal AI agent. Buyer and seller agents communicate directly — instant, 24/7, and no commission ever charged.
+      </p>
+    </div>
+    <div class="how-grid">
+      <!-- Buyer -->
+      <div class="how-track buyer reveal-l">
+        <div class="track-header">
+          <div class="track-icon buyer">🏠</div>
+          <div class="track-title">Buying or Renting</div>
+          <div class="track-badge buyer">Buyer</div>
+        </div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-num-wrap"><div class="step-num buyer">1</div><div class="step-line buyer"></div></div>
+            <div class="step-body">
+              <div class="step-name">Set up your profile</div>
+              <div class="step-desc">Enter your age, income, credit score, and target city. Your agent builds a complete financial picture.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num-wrap"><div class="step-num buyer">2</div><div class="step-line buyer"></div></div>
+            <div class="step-body">
+              <div class="step-name">Your agent searches</div>
+              <div class="step-desc">Real-time listings matched to your budget — rent and buy options both, with AI analysis on which fits your situation.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num-wrap"><div class="step-num buyer">3</div><div class="step-line buyer"></div></div>
+            <div class="step-body">
+              <div class="step-name">Express interest</div>
+              <div class="step-desc">Click a listing you like. Your agent contacts the seller's agent and begins negotiation on your behalf.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num-wrap"><div class="step-num buyer">4</div></div>
+            <div class="step-body">
+              <div class="step-name">You approve &amp; sign</div>
+              <div class="step-desc">Review the terms your agent negotiated. Approve and move forward — your agent handles the rest.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Seller -->
+      <div class="how-track seller reveal-r" style="transition-delay:.15s">
+        <div class="track-header">
+          <div class="track-icon seller">📋</div>
+          <div class="track-title">Selling or Renting Out</div>
+          <div class="track-badge seller">Seller</div>
+        </div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-num-wrap"><div class="step-num seller">1</div><div class="step-line seller"></div></div>
+            <div class="step-body">
+              <div class="step-name">List your property</div>
+              <div class="step-desc">Post address, price, and requirements. Set your agent's rules: income thresholds, credit minimums, lease terms.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num-wrap"><div class="step-num seller">2</div><div class="step-line seller"></div></div>
+            <div class="step-body">
+              <div class="step-name">Your agent screens buyers</div>
+              <div class="step-desc">AI automatically filters interested parties — verifying income (3× rent rule), credit score, and financials.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num-wrap"><div class="step-num seller">3</div><div class="step-line seller"></div></div>
+            <div class="step-body">
+              <div class="step-name">Review your dashboard</div>
+              <div class="step-desc">See qualified applicants with their full profile. Approve or decline with one click.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num-wrap"><div class="step-num seller">4</div></div>
+            <div class="step-body">
+              <div class="step-name">Close with confidence</div>
+              <div class="step-desc">Legally sound lease or purchase agreement prepared by your agent, with all required protections.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     LEGAL PROTECTIONS
+════════════════════════════════════════ -->
+<section class="legal">
+  <div class="legal-container">
+    <div style="text-align:center;margin-bottom:64px;">
+      <div class="section-label reveal">Legal protections</div>
+      <div class="section-title reveal" style="transition-delay:.1s">Your agent always has your back</div>
+      <p class="section-sub reveal" style="margin:0 auto;transition-delay:.2s">
+        Whether you're a renter, buyer, landlord, or seller — every deal on Defrost.AI includes legally sound terms to protect both parties.
+      </p>
+    </div>
+    <div class="legal-grid">
+      <div class="legal-card reveal" style="transition-delay:.05s">
+        <div class="legal-icon">🛡️</div>
+        <div class="legal-title">For Renters</div>
+        <ul class="legal-list">
+          <li>Deposit returned within 21 days of move-out, itemized in writing</li>
+          <li>5-day grace period before any late fees apply</li>
+          <li>Landlord must give 24-hour notice before entry (non-emergency)</li>
+          <li>Habitable condition guaranteed — issues addressed within 72 hours</li>
+          <li>No retaliation evictions for good-faith complaints</li>
+        </ul>
+      </div>
+      <div class="legal-card reveal" style="transition-delay:.15s">
+        <div class="legal-icon">🔒</div>
+        <div class="legal-title">For Landlords &amp; Sellers</div>
+        <ul class="legal-list">
+          <li>Security deposit (1–2 months rent) held in escrow before keys transfer</li>
+          <li>Earnest money (1–3% of sale price) non-refundable if buyer defaults</li>
+          <li>Income verification: tenants must earn ≥ 3× monthly rent</li>
+          <li>Lease-break penalty: 2 months rent unless military or DV exemption</li>
+          <li>Unlawful detainer filing if tenant refuses to vacate after notice</li>
+        </ul>
+      </div>
+      <div class="legal-card reveal" style="transition-delay:.25s">
+        <div class="legal-icon">📜</div>
+        <div class="legal-title">For Buyers (Purchase)</div>
+        <ul class="legal-list">
+          <li>10-day inspection contingency — cancel or negotiate repairs</li>
+          <li>21-day financing contingency — loan falls through? Get your deposit back</li>
+          <li>Appraisal contingency — property must appraise at or above offer price</li>
+          <li>Title insurance required — protects against undisclosed liens</li>
+          <li>Closing in 30–45 days with complete title transfer</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     CTA
+════════════════════════════════════════ -->
+<section class="cta-band">
+  <div style="max-width:640px;margin:0 auto;">
+    <div class="section-label reveal" style="display:block;text-align:center;">Get started</div>
+    <h2 class="reveal" style="transition-delay:.1s">Ready to let AI handle your real estate deal?</h2>
+    <p class="reveal" style="transition-delay:.2s">Free to sign up. No commission. Your agent works for you.</p>
+    <div class="cta-row reveal" style="transition-delay:.3s">
+      <button class="btn-lg btn-filled" style="height:52px;padding:0 44px;font-size:17px;" onclick="openModal('signup','buyer')">Find a Place →</button>
+      <button class="btn-lg btn-outline" style="height:52px;padding:0 44px;font-size:17px;" onclick="openModal('signup','seller')">List My Property →</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="logo" style="font-size:18px;margin-bottom:8px;">Defrost<span style="color:var(--green)">.AI</span></div>
+  <div>Your personal AI real estate agent. Free to use. Legal protections included.</div>
+</footer>
+
+<!-- SIGNUP MODAL -->
+<div class="overlay" id="signup-overlay" onclick="if(event.target===this)closeModal('signup')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('signup')">✕</button>
+    <h2>Create your account</h2>
+    <p class="msub">Your AI agent is ready to work for you.</p>
+    <div class="modal-err" id="signup-err"></div>
+    <div class="role-toggle">
+      <button class="role-btn buyer active" id="role-buyer" onclick="setRole('buyer')">
+        <span class="ri">🏠</span>Buy or Rent
+      </button>
+      <button class="role-btn seller" id="role-seller" onclick="setRole('seller')">
+        <span class="ri">📋</span>Sell or Rent Out
+      </button>
+    </div>
+    <div class="field"><label>Full Name</label><input type="text" id="su-name" placeholder="Jane Smith" /></div>
+    <div class="field"><label>Email</label><input type="email" id="su-email" placeholder="jane@email.com" /></div>
+    <div class="field"><label>Password (min 8 chars)</label><input type="password" id="su-pass" placeholder="••••••••" /></div>
+    <button class="btn-submit" id="su-btn" onclick="doSignup()">Create Account →</button>
+    <div class="modal-switch">Already have an account? <a onclick="switchModal('signup','login')">Log in</a></div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="overlay" id="login-overlay" onclick="if(event.target===this)closeModal('login')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('login')">✕</button>
+    <h2>Welcome back</h2>
+    <p class="msub">Log in to your Defrost.AI account.</p>
+    <div class="modal-err" id="login-err"></div>
+    <div class="field"><label>Email</label><input type="email" id="li-email" placeholder="jane@email.com" /></div>
+    <div class="field"><label>Password</label><input type="password" id="li-pass" placeholder="••••••••" /></div>
+    <button class="btn-submit" id="li-btn" onclick="doLogin()">Log In →</button>
+    <div class="modal-switch">Don't have an account? <a onclick="switchModal('login','signup')">Sign up free</a></div>
+  </div>
+</div>
+
+<script>
+  /* ── Redirect if logged in ── */
+  if (localStorage.getItem('defrost_token')) window.location.href = '/app';
+
+  /* ── Scroll-reveal (IntersectionObserver) ── */
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const d = parseFloat(e.target.style.transitionDelay || 0) * 1000;
+      setTimeout(() => e.target.classList.add('visible'), d);
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal,.reveal-l,.reveal-r').forEach(el => obs.observe(el));
+
+  /* ── Milestone marker reveal (whileInView scale from 0.5 → 1) ── */
+  const msObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const delay = parseInt(e.target.dataset.delay || 0, 10);
+      setTimeout(() => e.target.classList.add('visible'), delay);
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.ms').forEach(el => msObs.observe(el));
+
+  /* ── SVG path animation on scroll (framer-motion pathLength equivalent) ── */
+  (() => {
+    const section = document.getElementById('roadmap');
+    const path    = document.getElementById('ms-path');
+    if (!path) return;
+
+    const L = path.getTotalLength();
+    path.style.strokeDasharray  = L;
+    path.style.strokeDashoffset = L;   // starts invisible
+
+    const update = () => {
+      const r  = section.getBoundingClientRect();
+      const wh = window.innerHeight;
+      // maps framer-motion offset ["start end","end start"] with useTransform [0.15,0.7]→[0,1]
+      const raw = (wh - r.top) / (wh + r.height);
+      const p   = Math.max(0, Math.min(1, (raw - 0.15) / 0.55));
+      path.style.strokeDashoffset = L * (1 - p);
+    };
+
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+
+  /* ── Modal helpers ── */
+  let _role = 'buyer';
+
+  function openModal(w, role) {
+    if (role) setRole(role);
+    document.getElementById(w + '-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(w) {
+    document.getElementById(w + '-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function switchModal(a, b) { closeModal(a); setTimeout(() => openModal(b), 150); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal('signup'); closeModal('login'); }
+  });
+
+  function setRole(r) {
+    _role = r;
+    document.getElementById('role-buyer').className  = 'role-btn buyer'  + (r==='buyer'  ? ' active':'');
+    document.getElementById('role-seller').className = 'role-btn seller' + (r==='seller' ? ' active':'');
+  }
+
+  function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
+  function hideErr(id) { document.getElementById(id).style.display='none'; }
+
+  async function doSignup() {
+    hideErr('signup-err');
+    const name  = document.getElementById('su-name').value.trim();
+    const email = document.getElementById('su-email').value.trim();
+    const pass  = document.getElementById('su-pass').value;
+    if (!name||!email||!pass) return showErr('signup-err','Please fill in all fields.');
+    if (pass.length < 8)      return showErr('signup-err','Password must be at least 8 characters.');
+    const btn = document.getElementById('su-btn');
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    try {
+      const r = await fetch('/auth/signup', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ full_name:name, email, password:pass, role:_role }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || 'Signup failed');
+      localStorage.setItem('defrost_token', d.token);
+      localStorage.setItem('defrost_user',  JSON.stringify(d.user));
+      window.location.href = '/app';
+    } catch(e) {
+      showErr('signup-err', e.message);
+      btn.disabled = false; btn.textContent = 'Create Account →';
+    }
+  }
+
+  async function doLogin() {
+    hideErr('login-err');
+    const email = document.getElementById('li-email').value.trim();
+    const pass  = document.getElementById('li-pass').value;
+    if (!email||!pass) return showErr('login-err','Please fill in all fields.');
+    const btn = document.getElementById('li-btn');
+    btn.disabled = true; btn.textContent = 'Logging in…';
+    try {
+      const r = await fetch('/auth/login', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email, password:pass }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || 'Login failed');
+      localStorage.setItem('defrost_token', d.token);
+      localStorage.setItem('defrost_user',  JSON.stringify(d.user));
+      window.location.href = '/app';
+    } catch(e) {
+      showErr('login-err', e.message);
+      btn.disabled = false; btn.textContent = 'Log In →';
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('signup-overlay').classList.contains('open')) doSignup();
+    else if (document.getElementById('login-overlay').classList.contains('open')) doLogin();
+  });
+</script>
+</body>
+</html>

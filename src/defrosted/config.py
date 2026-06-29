@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     s3_documents_prefix: str = "documents/"
 
     # AI
-    anthropic_api_key: str
+    groq_api_key: str
     langsmith_api_key: str | None = None
     langsmith_project: str = "defrosted-production"
 

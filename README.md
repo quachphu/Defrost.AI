@@ -29,16 +29,65 @@ Two design rules are load-bearing:
 - **Append-only event store.** Every consequential action is an immutable event
   (`infrastructure/event_store.py`), giving a full audit trail.
 
-## Setup
+## Running the App
+
+**Prerequisites:** Docker and Docker Compose installed.
+
+**Step 1 — Create a `.env` file** in the project root with your API keys:
+
+```
+GROQ_API_KEY=your_key_here
+RENTCAST_API_KEY=your_key_here
+```
+
+> `RENTCAST_API_KEY` is optional — the app runs without it, listings just won't include live market data.
+
+**Step 2 — Build and start:**
 
 ```bash
-python3.12 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev,infra]"     # full stack
-cp .env.example .env              # fill in secrets
-make up                           # postgres, redis, temporal, elasticsearch
-make migrate                      # apply the schema
-make dev                          # run the API
+docker compose up --build
 ```
+
+**Step 3 — Open the app:** http://localhost:8000
+
+**To stop:** `Ctrl+C`, then `docker compose down`
+
+**If the build fails or containers don't start, clean rebuild:**
+
+```bash
+docker compose build --no-cache
+docker compose up -d
+```
+
+The database and JWT secret are configured automatically inside Docker — no `.env` setup required for those.
+
+**Routes:**
+- `/` — landing page (signup / login)
+- `/app` — dashboard (redirects to `/` if not logged in)
+- Buyers: rent vs buy analyzer + live listings + AI agent chat
+- Sellers: listing dashboard + interested buyer management + AI agent chat
+
+## Inspecting the Database with DBeaver
+
+The postgres database runs inside Docker and is exposed on host port **5433** (not 5432, to avoid conflicts with any local postgres).
+
+1. Open DBeaver → **New Database Connection** → choose **PostgreSQL**
+2. Fill in the connection fields:
+
+| Field    | Value       |
+|----------|-------------|
+| Host     | `localhost` |
+| Port     | `5433`      |
+| Database | `defrosted` |
+| Username | `defrosted` |
+| Password | `defrosted` |
+
+3. Click **Test Connection** → then **Finish**
+
+Tables created automatically on first run:
+- `users` — registered accounts (email, hashed password, role, profile info)
+- `property_listings` — seller-posted listings
+- `interests` — buyer interest requests with approve/decline status
 
 Common tasks: `make test`, `make lint`, `make typecheck`.
 

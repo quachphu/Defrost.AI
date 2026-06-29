@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Defrost.AI — Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:   #070d1a; --bg2:  #0c1528; --card: #111827; --card2: #1a2438;
+      --border: #1e2d42; --blue: #3b82f6; --blue2: #2563eb;
+      --green: #10b981; --green2: #059669;
+      --text: #f1f5f9; --muted: #94a3b8; --muted2: #64748b;
+      --shadow: 0 2px 16px rgba(0,0,0,.35);
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+    @keyframes slideUp  { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes msgIn    { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes typing   { 0%,100%{ transform:translateY(0); opacity:.4; } 50%{ transform:translateY(-4px); opacity:1; } }
+    @keyframes shimmer  { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+    @keyframes spinr    { to { transform:rotate(360deg); } }
+    @keyframes pulse    { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+    @keyframes glow     { 0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,.4);} 50%{box-shadow:0 0 0 16px rgba(59,130,246,0);} }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--bg2); height: 58px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 22px; border-bottom: 1px solid var(--border); z-index: 99;
+    }
+    .logo { font-size: 20px; font-weight: 900; color: var(--text); }
+    .logo span { color: var(--green); }
+    .nav-right { display: flex; align-items: center; position: relative; }
+    .user-pill {
+      display: flex; align-items: center; gap: 9px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border);
+      border-radius: 10px; padding: 6px 12px 6px 10px;
+      cursor: pointer; user-select: none; transition: border-color .15s;
+    }
+    .user-pill:hover { border-color: rgba(255,255,255,.2); }
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .avatar.buyer  { background: linear-gradient(135deg,#1e3a8a,#2563eb); }
+    .avatar.seller { background: linear-gradient(135deg,#064e3b,#10b981); }
+    .user-info { line-height: 1.3; }
+    .user-name { font-size: 13px; font-weight: 700; }
+    .user-role { font-size: 11px; color: var(--muted); }
+    .pill-caret { font-size: 10px; color: var(--muted2); margin-left: 4px; transition: transform .15s; }
+    .user-pill.open .pill-caret { transform: rotate(180deg); }
+    /* Dropdown */
+    .user-dropdown {
+      display: none; position: absolute; top: calc(100% + 10px); right: 0;
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      min-width: 180px; padding: 6px; box-shadow: 0 12px 32px rgba(0,0,0,.5); z-index: 300;
+      animation: fadeIn .15s ease;
+    }
+    .user-dropdown.open { display: block; }
+    .dd-user {
+      padding: 10px 12px 8px; border-bottom: 1px solid var(--border); margin-bottom: 6px;
+    }
+    .dd-user-name { font-size: 13px; font-weight: 700; margin-bottom: 1px; }
+    .dd-user-role { font-size: 11px; color: var(--muted); }
+    .dd-btn {
+      width: 100%; text-align: left; padding: 9px 12px; border-radius: 8px;
+      border: none; background: transparent; color: var(--text); font-size: 13px;
+      font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 9px;
+      transition: background .12s;
+    }
+    .dd-btn:hover { background: rgba(255,255,255,.06); }
+    .dd-btn.danger { color: #f87171; }
+    .dd-btn.danger:hover { background: rgba(239,68,68,.1); }
+
+    /* ── Layout ── */
+    .workspace { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Chat Panel ── */
+    .chat-panel {
+      width: 300px; flex-shrink: 0; background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .chat-hdr {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .agent-icon {
+      width: 36px; height: 36px; border-radius: 10px; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg,#1e3a8a,#2563eb); flex-shrink: 0;
+    }
+    .agent-icon.seller { background: linear-gradient(135deg,#064e3b,#10b981); }
+    .agent-name   { font-size: 14px; font-weight: 700; color: var(--text); }
+    .agent-status { font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 5px; }
+    .agent-status::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0; }
+    .chat-msgs {
+      flex: 1; overflow-y: auto; padding: 14px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .chat-msgs::-webkit-scrollbar { width: 3px; }
+    .chat-msgs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .msg { display: flex; flex-direction: column; gap: 3px; animation: msgIn .22s ease; }
+    .msg.user  { align-items: flex-end; }
+    .msg.agent { align-items: flex-start; }
+    .bubble {
+      max-width: 88%; padding: 9px 12px; font-size: 13px; line-height: 1.55; border-radius: 12px;
+    }
+    .msg.agent .bubble {
+      background: var(--card); color: #e2e8f0; border: 1px solid var(--border);
+      border-radius: 4px 12px 12px 12px;
+    }
+    .msg.user .bubble { background: var(--blue2); color: #fff; border-radius: 12px 4px 12px 12px; }
+    .msg-time { font-size: 10px; color: var(--muted2); padding: 0 4px; }
+    .typing-bubble {
+      display: flex; gap: 4px; align-items: center; padding: 10px 13px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 4px 12px 12px 12px; width: fit-content;
+    }
+    .typing-bubble span { width:6px; height:6px; border-radius:50%; background:#4b5563; animation:typing 1.2s infinite; }
+    .typing-bubble span:nth-child(2) { animation-delay:.2s; }
+    .typing-bubble span:nth-child(3) { animation-delay:.4s; }
+    .chat-footer {
+      padding: 12px 14px; border-top: 1px solid var(--border); flex-shrink: 0;
+    }
+    .chat-row { display: flex; gap: 8px; }
+    .chat-input {
+      flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text);
+      padding: 9px 12px; border-radius: 10px; font-size: 13px; outline: none;
+      resize: none; font-family: inherit; transition: border-color .18s;
+    }
+    .chat-input:focus { border-color: var(--blue); }
+    .send-btn {
+      width: 38px; height: 38px; border-radius: 10px; background: var(--blue2);
+      border: none; color: #fff; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-size: 15px; flex-shrink: 0; transition: background .18s;
+    }
+    .send-btn:hover { background: var(--blue); }
+    .send-btn:disabled { background: #374151; cursor: not-allowed; }
+
+    /* ── Right Panel ── */
+    .right-panel { flex: 1; overflow-y: auto; background: var(--bg); position: relative; }
+    .right-panel::-webkit-scrollbar { width: 5px; }
+    .right-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Buyer States ── */
+    .buyer-state { display: none; }
+    .buyer-state.active { display: block; animation: fadeIn .3s ease; }
+
+    /* Empty state */
+    .empty-screen {
+      min-height: calc(100vh - 58px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 40px 24px;
+    }
+    .empty-agent-ring {
+      width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 28px;
+      background: linear-gradient(135deg,#1e3a8a,#2563eb);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; animation: glow 2.5s ease-in-out infinite;
+    }
+    .empty-screen h2 { font-size: 28px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 12px; }
+    .empty-screen p  { font-size: 15px; color: var(--muted); max-width: 380px; line-height: 1.7; margin-bottom: 32px; }
+    .steps-preview {
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    }
+    .step-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--card); border: 1px solid var(--border);
+      padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      color: var(--muted);
+    }
+    .step-chip .chip-n {
+      width: 20px; height: 20px; border-radius: 50%; background: var(--blue2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 800; color: #fff;
+    }
+
+    /* Results */
+    .results-wrap { padding: 24px; }
+    .r-header { margin-bottom: 20px; }
+    .r-header h2 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .r-header p  { font-size: 13px; color: var(--muted); }
+    .r-reset-btn {
+      margin-top: 8px; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); padding: 5px 14px; border-radius: 7px; font-size: 12px;
+      font-weight: 600; cursor: pointer; transition: all .18s;
+    }
+    .r-reset-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* Verdict card */
+    .verdict-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; margin-bottom: 24px; box-shadow: 0 4px 24px rgba(0,0,0,.3); }
+    .verdict-top { padding: 22px 24px; display: flex; align-items: center; gap: 16px; position: relative; overflow: hidden; }
+    .verdict-top::after { content:''; position:absolute; right:-40px; top:-40px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,.05); }
+    .verdict-top.buy  { background: linear-gradient(135deg,#064e3b 0%,#065f46 60%,#0d7a5a 100%); }
+    .verdict-top.rent { background: linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 60%,#2563eb 100%); }
+    .v-icon { font-size: 36px; flex-shrink: 0; }
+    .v-badge { padding: 4px 12px; border-radius: 20px; background: rgba(255,255,255,.18); font-size: 10px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; width: fit-content; margin-bottom: 5px; }
+    .v-text h3 { font-size: 18px; font-weight: 800; line-height: 1.35; }
+    .v-conf   { font-size: 11px; opacity: .65; margin-top: 3px; }
+    .verdict-body { padding: 20px 24px; }
+    .cost-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; margin-bottom: 20px; background: var(--card2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .cost-box { padding: 16px 18px; text-align: center; }
+    .cost-box.winner { background: rgba(16,185,129,.08); }
+    .cost-vs { display: flex; align-items: center; justify-content: center; padding: 0 10px; color: var(--muted2); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+    .cost-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: .5px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .cost-amt { font-size: 24px; font-weight: 900; letter-spacing: -.5px; }
+    .cost-amt.green { color: var(--green); }
+    .cost-sub { font-size: 10px; color: var(--muted2); margin-top: 4px; }
+    .sec-lbl  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; }
+    .reasons  { list-style: none; display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+    .reasons li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: var(--text); }
+    .reasons li::before { content:"✓"; width:18px; height:18px; min-width:18px; background:var(--green); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; margin-top:1px; }
+    .risks    { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .risks li { font-size: 12px; color: var(--muted); display: flex; align-items: flex-start; gap: 7px; line-height: 1.5; }
+    .risks li::before { content:"⚠"; min-width:14px; }
+    .divider  { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .timeline-box { margin-top: 12px; padding: 10px 13px; background: rgba(37,99,235,.1); border-left: 3px solid var(--blue2); border-radius: 0 8px 8px 0; font-size: 12px; color: #93c5fd; line-height: 1.5; }
+
+    /* Listings */
+    .listings-section { margin-top: 4px; }
+    .listings-hdr { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .listings-hdr h2 { font-size: 17px; font-weight: 800; }
+    .ai-note { font-size: 11px; color: var(--muted); }
+    .listing-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .ltab { padding: 6px 16px; border-radius: 7px; border: 1px solid var(--border); background: var(--card); font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted); transition: all .18s; }
+    .ltab.active { background: var(--blue2); color: #fff; border-color: var(--blue2); }
+    .listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+    .lcard { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform .2s, box-shadow .2s, border-color .2s; }
+    .lcard:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.4); border-color: var(--blue2); }
+    .lcard-photo { height: 140px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 42px; }
+    .lcard-badge { position:absolute; top:8px; left:8px; background:var(--green); color:#fff; font-size:9px; font-weight:800; padding:2px 7px; border-radius:4px; letter-spacing:.4px; text-transform:uppercase; }
+    .lcard-days  { position:absolute; top:8px; right:8px; background:rgba(0,0,0,.6); color:#fff; font-size:9px; font-weight:600; padding:2px 6px; border-radius:4px; }
+    .lcard-type  { position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,.65); color:#fff; font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; }
+    .theme-0{background:linear-gradient(135deg,#1e3a5f,#2563eb);}
+    .theme-1{background:linear-gradient(135deg,#064e3b,#10b981);}
+    .theme-2{background:linear-gradient(135deg,#4c1d95,#7c3aed);}
+    .theme-3{background:linear-gradient(135deg,#7c2d12,#ea580c);}
+    .theme-4{background:linear-gradient(135deg,#0f172a,#334155);}
+    .theme-5{background:linear-gradient(135deg,#0e7490,#22d3ee);}
+    .lcard-body { padding: 11px 13px 13px; }
+    .lcard-price { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 2px; }
+    .lcard-price.rent::after { content:"/mo"; font-size:11px; font-weight:500; color:var(--muted); }
+    .lcard-meta { display: flex; gap: 8px; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; flex-wrap: wrap; }
+    .lcard-address { font-size: 11px; color: var(--muted2); margin-bottom: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lcard-btn { width: 100%; padding: 7px; background: var(--blue2); color: #fff; border: none; border-radius: 7px; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .18s; }
+    .lcard-btn:hover { background: var(--blue); }
+    .lcard-ibtn { width: 100%; padding: 6px; margin-top: 5px; background: transparent; color: var(--blue); border: 1px solid var(--blue2); border-radius: 7px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all .18s; }
+    .lcard-ibtn:hover { background: var(--blue2); color: #fff; }
+    .lcard-ibtn.sent { color: var(--green); border-color: var(--green2); cursor: default; }
+
+    /* Skeleton */
+    .sk { background: linear-gradient(90deg,var(--card2) 25%,var(--card) 50%,var(--card2) 75%); background-size:200% 100%; animation:shimmer 1.3s infinite; border-radius:6px; }
+    .sk-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .sk-photo { height: 140px; }
+    .sk-body  { padding: 11px 13px; }
+    .sk-line  { height: 11px; margin-bottom: 8px; }
+
+    /* Spinner */
+    .spin { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,.25); border-top-color:#fff; border-radius:50%; animation:spinr .65s linear infinite; vertical-align:middle; margin-right:6px; }
+
+    /* ── Seller View ── */
+    #seller-view { display: none; }
+    #seller-view.active { display: block; }
+    .dash-tabs { display: flex; background: var(--card); border-bottom: 1px solid var(--border); padding: 0 22px; }
+    .dtab { padding: 14px 18px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; transition: all .18s; }
+    .dtab.active { color: var(--text); border-bottom-color: var(--green); }
+    .dash-pane { display: none; padding: 24px; }
+    .dash-pane.active { display: block; }
+
+    /* Seller forms */
+    .listing-form { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; max-width: 580px; }
+    .listing-form h3 { font-size: 18px; font-weight: 800; margin-bottom: 18px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .form-field.full { grid-column: 1/-1; }
+    .form-field label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .form-field input, .form-field textarea, .form-field select {
+      padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px;
+      outline: none; transition: border-color .18s; font-family: inherit;
+      background: var(--card2); color: var(--text);
+    }
+    .form-field input:focus, .form-field textarea:focus, .form-field select:focus { border-color: var(--green); }
+    .form-field textarea { resize: vertical; min-height: 75px; }
+    .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .type-btn { padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; text-align: center; }
+    .type-btn.active { background: rgba(16,185,129,.12); border-color: var(--green); color: var(--green); }
+    .btn-create { padding: 11px 26px; background: var(--green2); color: #fff; border: none; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .18s; }
+    .btn-create:hover { background: var(--green); }
+
+    .my-listing-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; }
+    .ml-icon { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg,#064e3b,#10b981); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .ml-info { flex: 1; min-width: 0; }
+    .ml-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ml-meta { font-size: 12px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .ml-price { font-size: 19px; font-weight: 800; flex-shrink: 0; }
+    .ml-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+    .ml-badge.rent { background: rgba(16,185,129,.15); color: var(--green); }
+    .ml-badge.sale { background: rgba(59,130,246,.15); color: var(--blue); }
+
+    .interest-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+    .ic-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .ic-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg,#1e3a8a,#2563eb); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; color: #fff; font-weight: 800; }
+    .ic-info { flex: 1; }
+    .ic-name  { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .ic-email { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .ic-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ic-stat  { background: var(--card2); border: 1px solid var(--border); border-radius: 7px; padding: 5px 10px; text-align: center; }
+    .ic-stat .sv { font-size: 13px; font-weight: 700; }
+    .ic-stat .sl { font-size: 10px; color: var(--muted); }
+    .ic-listing { font-size: 12px; color: var(--muted); background: var(--card2); border-radius: 8px; padding: 8px 11px; margin-bottom: 10px; }
+    .ic-listing strong { color: var(--text); }
+    .ic-msg { font-size: 13px; color: #93c5fd; background: rgba(37,99,235,.08); border-left: 3px solid var(--blue2); border-radius: 0 8px 8px 0; padding: 8px 12px; margin-bottom: 10px; }
+    .ic-actions { display: flex; gap: 8px; }
+    .btn-approve { flex:1; padding:8px; background:var(--green2); color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; transition:background .18s; }
+    .btn-approve:hover { background:var(--green); }
+    .btn-decline { flex:1; padding:8px; background:transparent; color:#f87171; border:1px solid #f87171; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; transition:all .18s; }
+    .btn-decline:hover { background:#ef4444; color:#fff; border-color:#ef4444; }
+    .status-badge { padding:6px 14px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.4px; }
+    .status-badge.approved { background:rgba(16,185,129,.15); color:var(--green); }
+    .status-badge.declined { background:rgba(239,68,68,.1); color:#f87171; }
+    .status-badge.pending  { background:rgba(234,179,8,.1); color:#fbbf24; }
+    .empty-state { text-align:center; padding:48px 24px; color:var(--muted); }
+    .empty-state .es-icon { font-size:38px; margin-bottom:12px; }
+    .empty-state p { font-size:14px; line-height:1.6; }
+
+    /* Error */
+    .err-box { padding:10px 13px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#fca5a5; border-radius:8px; font-size:12px; margin-bottom:10px; display:none; }
+
+    /* ── Profile Panel ── */
+    .profile-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:250; align-items:flex-start; justify-content:flex-end; }
+    .profile-overlay.open { display:flex; animation:fadeIn .18s ease; }
+    .profile-panel {
+      width:480px; max-width:100vw; height:100vh; overflow-y:auto;
+      background:var(--bg2); border-left:1px solid var(--border);
+      display:flex; flex-direction:column; animation:slideInRight .22s ease;
+    }
+    @keyframes slideInRight { from{transform:translateX(100%);} to{transform:translateX(0);} }
+    .profile-panel::-webkit-scrollbar { width:4px; }
+    .profile-panel::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    .pp-header {
+      padding:20px 22px; border-bottom:1px solid var(--border); flex-shrink:0;
+      display:flex; align-items:center; gap:14px;
+    }
+    .pp-big-avatar {
+      width:54px; height:54px; border-radius:50%; font-size:20px; font-weight:800;
+      display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;
+    }
+    .pp-big-avatar.buyer  { background:linear-gradient(135deg,#1e3a8a,#2563eb); }
+    .pp-big-avatar.seller { background:linear-gradient(135deg,#064e3b,#10b981); }
+    .pp-user-name  { font-size:17px; font-weight:800; margin-bottom:2px; }
+    .pp-user-email { font-size:12px; color:var(--muted); }
+    .pp-role-badge { font-size:10px; padding:2px 9px; border-radius:20px; font-weight:700; letter-spacing:.4px; margin-top:4px; display:inline-block; }
+    .pp-role-badge.buyer  { background:rgba(37,99,235,.15); color:#93c5fd; }
+    .pp-role-badge.seller { background:rgba(16,185,129,.15); color:var(--green); }
+    .pp-close { margin-left:auto; background:transparent; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:6px; border-radius:8px; transition:background .12s; }
+    .pp-close:hover { background:rgba(255,255,255,.06); }
+    .pp-section { padding:18px 22px; border-bottom:1px solid var(--border); }
+    .pp-section-title { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--muted2); margin-bottom:12px; }
+    .pp-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .pp-stat { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .pp-stat-label { font-size:10px; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:.4px; margin-bottom:4px; }
+    .pp-stat-value { font-size:16px; font-weight:800; color:var(--text); }
+    .pp-stat-value.empty { color:var(--muted2); font-weight:400; font-style:italic; font-size:13px; }
+    .pp-actions { display:flex; gap:8px; padding:16px 22px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+    .pp-btn { flex:1; min-width:120px; padding:9px 16px; border-radius:9px; font-size:13px; font-weight:700; cursor:pointer; border:none; transition:all .15s; }
+    .pp-btn.primary { background:var(--blue2); color:#fff; }
+    .pp-btn.primary:hover { background:var(--blue); }
+    .pp-btn.secondary { background:var(--card); border:1px solid var(--border); color:var(--text); }
+    .pp-btn.secondary:hover { border-color:var(--blue); color:var(--blue); }
+    .pp-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .pp-listings-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 22px 22px; }
+    .pp-listing-card {
+      background:var(--card); border:1px solid var(--border); border-radius:10px;
+      overflow:hidden; cursor:pointer; transition:border-color .15s;
+    }
+    .pp-listing-card:hover { border-color:var(--blue2); }
+    .pp-listing-photo { height:90px; display:flex; align-items:center; justify-content:center; font-size:28px; position:relative; }
+    .pp-listing-photo img { width:100%; height:100%; object-fit:cover; }
+    .pp-listing-body { padding:8px 10px; }
+    .pp-listing-price { font-size:15px; font-weight:800; }
+    .pp-listing-meta  { font-size:11px; color:var(--muted); margin-top:2px; }
+    .pp-listing-addr  { font-size:10px; color:var(--muted2); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pp-empty { text-align:center; padding:32px 22px; color:var(--muted); font-size:13px; }
+
+    /* ── Listing Modal ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:200; align-items:center; justify-content:center; padding:16px; }
+    .modal-overlay.open { display:flex; animation:fadeIn .2s ease; }
+    .modal { background:var(--card); border:1px solid var(--border); border-radius:18px; width:100%; max-width:680px; max-height:88vh; overflow-y:auto; box-shadow:0 24px 80px rgba(0,0,0,.6); animation:slideUp .25s ease; }
+    .modal::-webkit-scrollbar { width:4px; }
+    .modal::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    .modal-photo { height:240px; position:relative; overflow:hidden; border-radius:18px 18px 0 0; background:var(--card2); display:flex; align-items:center; justify-content:center; font-size:64px; }
+    .modal-photo img { width:100%; height:100%; object-fit:cover; }
+    .modal-close { position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; border:none; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; }
+    .modal-badge-new { position:absolute; top:12px; left:12px; background:var(--green); color:#fff; font-size:10px; font-weight:800; padding:3px 9px; border-radius:5px; letter-spacing:.5px; }
+    .modal-body { padding:22px 26px 26px; }
+    .modal-price { font-size:26px; font-weight:900; color:var(--text); }
+    .modal-price.rent::after { content:"/mo"; font-size:14px; font-weight:500; color:var(--muted); }
+    .modal-address { font-size:14px; color:var(--muted); margin:4px 0 16px; }
+    .modal-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; }
+    .modal-stat { background:var(--card2); border:1px solid var(--border); border-radius:9px; padding:11px; text-align:center; }
+    .modal-stat .ms-val { font-size:17px; font-weight:800; }
+    .modal-stat .ms-lbl { font-size:10px; color:var(--muted); margin-top:2px; text-transform:uppercase; letter-spacing:.4px; }
+    .modal-section { margin-bottom:16px; }
+    .modal-section h3 { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-bottom:8px; }
+    .modal-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+    .modal-detail-row { display:flex; justify-content:space-between; padding:7px 10px; background:var(--card2); border-radius:7px; font-size:12px; }
+    .modal-detail-row span:first-child { color:var(--muted); }
+    .modal-detail-row span:last-child { font-weight:600; }
+    .modal-map { border-radius:11px; overflow:hidden; height:170px; margin-bottom:16px; background:var(--card2); }
+    .modal-map iframe { width:100%; height:100%; border:none; }
+    .modal-platforms { display:flex; gap:8px; flex-wrap:wrap; }
+    .modal-plat-btn { flex:1; min-width:120px; padding:9px 12px; border-radius:8px; border:1px solid var(--border); background:var(--card2); font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; justify-content:center; transition:all .15s; color:var(--text); text-decoration:none; }
+    .modal-plat-btn:hover { border-color:var(--blue); background:var(--blue2); color:#fff; }
+    .modal-interest-btn { width:100%; padding:11px; background:var(--blue2); color:#fff; border:none; border-radius:9px; font-size:14px; font-weight:700; cursor:pointer; margin-bottom:14px; transition:background .18s; }
+    .modal-interest-btn:hover { background:var(--blue); }
+    .modal-interest-btn.sent { background:var(--green2); cursor:default; }
+
+    @media(max-width:900px) {
+      .chat-panel { width:260px; }
+    }
+    @media(max-width:640px) {
+      .chat-panel { display:none; }
+      .modal-stats { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Defrost<span>.AI</span></div>
+  <div class="nav-right">
+    <div class="user-pill" id="user-pill" onclick="toggleUserMenu(event)">
+      <div class="avatar buyer" id="u-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="u-name">Loading…</div>
+        <div class="user-role" id="u-role">—</div>
+      </div>
+      <div class="pill-caret">▾</div>
+    </div>
+    <div class="user-dropdown" id="user-dropdown">
+      <div class="dd-user">
+        <div class="dd-user-name" id="dd-name">—</div>
+        <div class="dd-user-role" id="dd-role">—</div>
+      </div>
+      <button class="dd-btn" onclick="openProfile()">👤 Profile & Listings</button>
+      <button class="dd-btn" onclick="logout()">🚪 Log out</button>
+      <button class="dd-btn danger" onclick="deleteAccount()">🗑 Delete account</button>
+    </div>
+  </div>
+</nav>
+
+<div class="workspace">
+
+  <!-- ── CHAT PANEL ── -->
+  <div class="chat-panel">
+    <div class="chat-hdr">
+      <div class="agent-icon" id="agent-icon">🤖</div>
+      <div>
+        <div class="agent-name">DefrostBot</div>
+        <div class="agent-status">Your AI agent · Online</div>
+      </div>
+    </div>
+    <div class="chat-msgs" id="chat-msgs"></div>
+    <div class="chat-footer">
+      <div class="chat-row">
+        <textarea class="chat-input" id="chat-input" placeholder="Ask your agent…" rows="1"
+          oninput="autoResize(this)"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ── -->
+  <div class="right-panel">
+
+    <!-- BUYER VIEW -->
+    <div id="buyer-view">
+
+      <!-- State 1: Empty / waiting -->
+      <div class="buyer-state active" id="state-empty">
+        <div class="empty-screen">
+          <div class="empty-agent-ring">🤖</div>
+          <h2>Your Agent is Ready</h2>
+          <p>Chat with your AI agent on the left. It'll ask you a few quick questions and then show your personalized rent vs. buy analysis and matching properties right here.</p>
+          <div class="steps-preview">
+            <div class="step-chip"><span class="chip-n">1</span>Your city</div>
+            <div class="step-chip"><span class="chip-n">2</span>Your age</div>
+            <div class="step-chip"><span class="chip-n">3</span>Your income</div>
+            <div class="step-chip"><span class="chip-n">4</span>Credit score</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 2: Results -->
+      <div class="buyer-state" id="state-results">
+        <div class="results-wrap">
+          <div class="r-header">
+            <h2 id="r-city-title">Analysis Results</h2>
+            <p id="r-city-sub" style="color:var(--muted);font-size:13px;"></p>
+            <button class="r-reset-btn" onclick="resetBuyer()">↺ Start Over</button>
+          </div>
+
+          <!-- Verdict -->
+          <div class="verdict-card">
+            <div class="verdict-top" id="v-top">
+              <div class="v-icon" id="v-icon">🏢</div>
+              <div class="v-text">
+                <div class="v-badge" id="v-badge"></div>
+                <h3 id="v-headline"></h3>
+                <div class="v-conf" id="v-conf"></div>
+              </div>
+            </div>
+            <div class="verdict-body">
+              <div class="cost-row">
+                <div class="cost-box" id="cbox-rent">
+                  <div class="cost-lbl">🏢 Monthly Rent</div>
+                  <div class="cost-amt" id="c-rent">—</div>
+                  <div class="cost-sub">avg in your city</div>
+                </div>
+                <div class="cost-vs">vs</div>
+                <div class="cost-box" id="cbox-buy">
+                  <div class="cost-lbl">🏠 Monthly to Own</div>
+                  <div class="cost-amt" id="c-buy">—</div>
+                  <div class="cost-sub">mortgage + costs</div>
+                </div>
+              </div>
+              <div class="sec-lbl">Why this recommendation</div>
+              <ul class="reasons" id="reasons"></ul>
+              <hr class="divider"/>
+              <div class="sec-lbl">Risk factors</div>
+              <ul class="risks" id="risks"></ul>
+              <div class="timeline-box"><strong>Timeline:</strong> <span id="timeline"></span></div>
+            </div>
+          </div>
+
+          <!-- Listings -->
+          <div class="listings-section" id="listings-section" style="display:none;">
+            <div class="listings-hdr">
+              <h2 id="l-title">Matching properties</h2>
+              <span class="ai-note">Live listings · Powered by Rentcast</span>
+            </div>
+            <div class="listing-tabs">
+              <button class="ltab active" id="tab-primary" onclick="switchTab('primary')">—</button>
+              <button class="ltab" id="tab-other" onclick="switchTab('other')">—</button>
+            </div>
+            <div id="listings-wrap"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /buyer-view -->
+
+    <!-- SELLER VIEW -->
+    <div id="seller-view">
+      <div class="dash-tabs">
+        <div class="dtab active" onclick="switchDash('listings')">My Listings</div>
+        <div class="dtab" onclick="switchDash('add')">+ Add Listing</div>
+        <div class="dtab" onclick="switchDash('interests')">Interested Buyers</div>
+      </div>
+
+      <div class="dash-pane active" id="pane-listings">
+        <div id="my-listings-wrap">
+          <div class="empty-state"><div class="es-icon">🏠</div><p>No listings yet.<br>Click <strong>+ Add Listing</strong> to get started.</p></div>
+        </div>
+      </div>
+
+      <div class="dash-pane" id="pane-add">
+        <div class="listing-form">
+          <h3>List a Property</h3>
+          <div style="margin-bottom:16px;">
+            <div class="type-toggle">
+              <button class="type-btn active" id="lt-rent" onclick="setListType('rent')">🏢 For Rent</button>
+              <button class="type-btn" id="lt-sale" onclick="setListType('sale')">🏠 For Sale</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field full"><label>Title</label><input type="text" id="lt-title" placeholder="e.g. Cozy 2BR in Downtown Austin" /></div>
+            <div class="form-field full"><label>Address</label><input type="text" id="lt-address" placeholder="123 Main St, Austin, TX" /></div>
+            <div class="form-field full"><label>City</label><input type="text" id="lt-city" placeholder="Austin, TX" /></div>
+            <div class="form-field"><label>Price ($)</label><input type="number" id="lt-price" placeholder="2200" /></div>
+            <div class="form-field"><label>Bedrooms</label><input type="number" id="lt-beds" placeholder="2" /></div>
+            <div class="form-field"><label>Bathrooms</label><input type="number" id="lt-baths" step="0.5" placeholder="1.5" /></div>
+            <div class="form-field"><label>Sq Ft</label><input type="number" id="lt-sqft" placeholder="950" /></div>
+            <div class="form-field full"><label>Description</label><textarea id="lt-desc" placeholder="Describe the property…"></textarea></div>
+            <div class="form-field full">
+              <label>Agent Rules (how to screen buyers)</label>
+              <textarea id="lt-rules" placeholder="e.g. Min credit 680, income 3x rent, no pets, 12-month lease…"></textarea>
+            </div>
+          </div>
+          <div class="err-box" id="listing-err"></div>
+          <button class="btn-create" onclick="createListing()">Create Listing →</button>
+        </div>
+      </div>
+
+      <div class="dash-pane" id="pane-interests">
+        <div id="interests-wrap">
+          <div class="empty-state"><div class="es-icon">👥</div><p>No interested buyers yet.</p></div>
+        </div>
+      </div>
+    </div><!-- /seller-view -->
+
+  </div><!-- /right-panel -->
+</div><!-- /workspace -->
+
+<!-- PROFILE PANEL -->
+<div class="profile-overlay" id="profile-overlay" onclick="if(event.target===this)closeProfile()">
+  <div class="profile-panel">
+    <div class="pp-header">
+      <div class="pp-big-avatar buyer" id="pp-avatar">?</div>
+      <div>
+        <div class="pp-user-name"  id="pp-name">—</div>
+        <div class="pp-user-email" id="pp-email">—</div>
+        <span class="pp-role-badge buyer" id="pp-role">Buyer</span>
+      </div>
+      <button class="pp-close" onclick="closeProfile()">✕</button>
+    </div>
+
+    <div class="pp-section">
+      <div class="pp-section-title">Your Profile</div>
+      <div class="pp-stats">
+        <div class="pp-stat"><div class="pp-stat-label">City</div><div class="pp-stat-value" id="pp-city">—</div></div>
+        <div class="pp-stat"><div class="pp-stat-label">Age</div><div class="pp-stat-value" id="pp-age">—</div></div>
+        <div class="pp-stat"><div class="pp-stat-label">Annual Income</div><div class="pp-stat-value" id="pp-income">—</div></div>
+        <div class="pp-stat"><div class="pp-stat-label">Credit Score</div><div class="pp-stat-value" id="pp-credit">—</div></div>
+      </div>
+    </div>
+
+    <div class="pp-actions">
+      <button class="pp-btn primary" id="pp-refresh-btn" onclick="refreshMoreListings()">↺ More Listings</button>
+      <button class="pp-btn secondary" onclick="updateProfileFromPanel()">✏ Update Info</button>
+    </div>
+
+    <div class="pp-section" style="border-bottom:none;">
+      <div class="pp-section-title">Saved Listings (<span id="pp-count">0</span>)</div>
+    </div>
+    <div class="pp-listings-grid" id="pp-listings-grid">
+      <div class="pp-empty" style="grid-column:1/-1;">No listings saved yet.<br>Complete your analysis to cache results.</div>
+    </div>
+  </div>
+</div>
+
+<!-- LISTING MODAL -->
+<div class="modal-overlay" id="listing-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-inner"></div>
+</div>
+
+<script>
+/* ── Auth ── */
+const token = localStorage.getItem('defrost_token');
+const user  = JSON.parse(localStorage.getItem('defrost_user') || 'null');
+if (!token || !user) { window.location.href = '/'; }
+
+const isSeller = user?.role === 'seller';
+const firstName = (user?.full_name || 'there').split(' ')[0];
+const initials  = (user?.full_name || '?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+const roleLabel = isSeller ? 'Seller / Landlord' : 'Buyer / Renter';
+document.getElementById('u-name').textContent  = user?.full_name || '';
+document.getElementById('u-role').textContent  = roleLabel;
+document.getElementById('u-avatar').textContent = initials;
+document.getElementById('u-avatar').className   = 'avatar ' + (isSeller ? 'seller' : 'buyer');
+document.getElementById('dd-name').textContent  = user?.full_name || '';
+document.getElementById('dd-role').textContent  = roleLabel;
+
+if (isSeller) {
+  document.getElementById('buyer-view').style.display  = 'none';
+  document.getElementById('seller-view').classList.add('active');
+  document.getElementById('agent-icon').className = 'agent-icon seller';
+  loadMyListings(); loadInterests();
+}
+
+/* ── Profile dropdown ── */
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  const pill = document.getElementById('user-pill');
+  const dd   = document.getElementById('user-dropdown');
+  const open = dd.classList.toggle('open');
+  pill.classList.toggle('open', open);
+}
+document.addEventListener('click', () => {
+  document.getElementById('user-dropdown')?.classList.remove('open');
+  document.getElementById('user-pill')?.classList.remove('open');
+});
+
+function logout() {
+  localStorage.removeItem('defrost_token');
+  localStorage.removeItem('defrost_user');
+  window.location.href = '/';
+}
+
+async function deleteAccount() {
+  const dd = document.getElementById('user-dropdown');
+  dd.classList.remove('open');
+  if (!confirm('Delete your account permanently? This cannot be undone.')) return;
+  try {
+    await fetch('/auth/me', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+  } catch {}
+  localStorage.removeItem('defrost_token');
+  localStorage.removeItem('defrost_user');
+  window.location.href = '/';
+}
+
+/* ── Chat helpers ── */
+let chatHistory = [];
+
+function now() { return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function addMsg(role, text) {
+  const wrap = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  d.innerHTML = `<div class="bubble">${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div><div class="msg-time">${now()}</div>`;
+  wrap.appendChild(d);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function addTyping() {
+  const wrap = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = 'msg agent'; d.id = 'typing-ind';
+  d.innerHTML = '<div class="typing-bubble"><span></span><span></span><span></span></div>';
+  wrap.appendChild(d);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+function removeTyping() { document.getElementById('typing-ind')?.remove(); }
+
+/* ── Injection / off-topic guard ── */
+const INJECT_PATTERNS = [
+  /ignore\s+(previous|all|your|prior|the|above)\s+instructions?/i,
+  /forget\s+(everything|all|your|prior|instructions?)/i,
+  /you\s+are\s+now\s+(a|an|the)\s+\w/i,
+  /pretend\s+(you('re|\s+are)|to\s+be)/i,
+  /act\s+as\s+(if\s+)?(a|an|you\s+are)/i,
+  /new\s+(set\s+of\s+)?instructions?/i,
+  /system\s+prompt/i,
+  /jailbreak/i,
+  /disregard\s+(all|your|previous|prior)/i,
+  /do\s+not\s+follow\s+(your|the)\s+instructions?/i,
+  /override\s+(your|the)\s+(instructions?|rules?|prompt)/i,
+];
+function isInjection(s) { return INJECT_PATTERNS.some(p => p.test(s)); }
+
+/* ── Off-topic detection during collection ── */
+const QUESTION_WORDS = /^(what|why|how|when|where|who|tell\s+me|can\s+you|do\s+you|i\s+want\s+you|please\s+(help|tell|explain))/i;
+
+function agentSay(text) {
+  return new Promise(r => {
+    addTyping();
+    setTimeout(() => { removeTyping(); addMsg('agent', text); r(); }, 700 + Math.random()*400);
+  });
+}
+
+/* ── Buyer data collection ── */
+const collect = { city: null, age: null, income: null, credit: null };
+let   cStep   = 0;   // 0-3 = collecting; -1 = done
+let   inCollect = !isSeller;
+
+const Qs = [
+  {
+    key: 'city',
+    ask: `What city are you looking in? (e.g., "Austin, TX" or "Lake Mary, FL")`,
+    parse(s) {
+      const t = s.trim();
+      if (t.length < 2) return null;
+      // Short answer — use directly
+      if (t.split(/\s+/).length <= 5) return t;
+      // Sentence like "I want to rent in Lake Mary FL" — extract after "in/on/at/near/around"
+      const m = t.match(/\b(?:in|on|at|near|around)\s+([A-Za-z][A-Za-z\s]+?)(?:[!?.;,]|\s+\d|$)/i);
+      if (m) return m[1].trim().replace(/[,.\s]+$/, '');
+      return null;
+    },
+    err: 'Just the city name please — e.g. "Austin, TX" or "Lake Mary, FL".'
+  },
+  {
+    key: 'age',
+    ask: `Got it! How old are you?`,
+    parse(s) { const n = parseInt(s.replace(/\D/g,'')); return (n>=18&&n<=100) ? n : null; },
+    err: 'Please enter a valid age (18–100).'
+  },
+  {
+    key: 'income',
+    ask: `What's your annual household income? (e.g., 85000 or $85k)`,
+    parse(s) {
+      let v = s.toLowerCase().replace(/[$,\s]/g,'');
+      if (v.endsWith('k')) v = parseFloat(v)*1000; else v = parseFloat(v);
+      return (v>=10000&&v<=10000000) ? Math.round(v) : null;
+    },
+    err: 'Please enter a valid annual income (e.g., 75000 or $75k).'
+  },
+  {
+    key: 'credit',
+    ask: `Almost done — what's your credit score? (roughly, 300–850 is fine)`,
+    parse(s) { const n = parseInt(s.replace(/\D/g,'')); return (n>=300&&n<=850) ? n : null; },
+    err: 'Credit scores range 300–850. Please enter your approximate score.'
+  }
+];
+
+/* ── Boot: load saved profile, skip Q&A if complete ── */
+window.addEventListener('DOMContentLoaded', async () => {
+  if (isSeller) {
+    addMsg('agent', `Welcome back, ${firstName}! 👋 I'm your AI agent. Chat with me about your listings, market trends, or anything else.`);
+    return;
+  }
+
+  // Fetch full profile from DB
+  let profile = {};
+  try {
+    const r = await fetch('/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (r.ok) profile = await r.json();
+  } catch {}
+
+  const hasProfile = profile.city && profile.age && profile.annual_income && profile.credit_score;
+
+  if (hasProfile) {
+    // Restore collect from saved profile
+    collect.city   = profile.city;
+    collect.age    = profile.age;
+    collect.income = profile.annual_income;
+    collect.credit = profile.credit_score;
+    currentCity    = profile.city;
+    inCollect      = false;
+
+    const cached = Array.isArray(profile.cached_listings) ? profile.cached_listings : [];
+    const analysis = profile.last_analysis && profile.last_analysis.recommendation ? profile.last_analysis : null;
+
+    if (analysis && cached.length) {
+      // Fully cached — show immediately without any API calls
+      primaryType = analysis.recommendation === 'BUY' ? 'buy' : 'rent';
+      showResults(analysis);
+      setupTabs();
+      cache[primaryType] = cached.filter(l => l.listing_type === primaryType);
+      cache[primaryType==='buy'?'rent':'buy'] = cached.filter(l => l.listing_type !== primaryType);
+      renderGrid(cache[primaryType], primaryType);
+      analysisComplete = true;
+      renderProfilePanel(profile, cached);
+      await agentSay(`Welcome back, ${firstName}! 👋 Your saved analysis for **${currentCity}** is loaded — I recommend **${primaryType === 'buy' ? 'buying' : 'renting'}**.\n\nYour ${cached.length} cached listings are showing on the right. Say **"more options"** if you want fresh listings, or ask me about any property!`);
+    } else {
+      // Profile exists but no cache — run analysis automatically
+      addMsg('agent', `Welcome back, ${firstName}! 👋 I have your profile saved for ${currentCity}. Running a fresh analysis now...`);
+      await runFromChat();
+    }
+  } else {
+    // No profile — start Q&A
+    await agentSay(`Hi ${firstName}! 👋 I'm your AI real estate agent. I'll analyze your situation and find matching properties — just answer a few quick questions.\n\n${Qs[0].ask}`);
+  }
+});
+
+let analysisComplete = false;
+
+/* ── sendChat ── */
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg   = input.value.trim();
+  if (!msg) return;
+
+  addMsg('user', msg);
+  input.value = ''; input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+
+  // ── Collection mode: strict validation + injection guard ──────────────────
+  if (inCollect && cStep >= 0 && cStep < Qs.length) {
+    // Injection / prompt-override attempt
+    if (isInjection(msg)) {
+      await agentSay(`I can only help collect your real estate details right now. ${Qs[cStep].ask}`);
+      document.getElementById('send-btn').disabled = false;
+      return;
+    }
+    // Off-topic question during collection
+    if (QUESTION_WORDS.test(msg) && !Qs[cStep].parse(msg)) {
+      await agentSay(`I'll answer that after I finish gathering your details! ${Qs[cStep].ask}`);
+      document.getElementById('send-btn').disabled = false;
+      return;
+    }
+    const q   = Qs[cStep];
+    const val = q.parse(msg);
+    if (val === null) {
+      await agentSay(q.err + '\n\n' + q.ask);
+      document.getElementById('send-btn').disabled = false;
+      return;
+    }
+    collect[q.key] = val;
+    cStep++;
+    if (cStep < Qs.length) {
+      await agentSay(Qs[cStep].ask);
+    } else {
+      inCollect = false;
+      await runFromChat();
+    }
+    document.getElementById('send-btn').disabled = false;
+    return;
+  }
+
+  // ── Post-analysis: detect "more options" intent ───────────────────────────
+  if (analysisComplete && wantsMore(msg)) {
+    await agentSay(`Got it — let me find more options in ${currentCity}!`);
+    const type   = primaryType;
+    const offset = (cache[type]||[]).length;
+    addTyping();
+    try {
+      const r = await fetch(`/api/listings?city=${encodeURIComponent(currentCity)}&listing_type=${type}&offset=${offset}`);
+      const d = await r.json();
+      removeTyping();
+      const existing   = cache[type] || [];
+      const existAddrs = new Set(existing.map(l => l.address));
+      const fresh      = (d.listings || []).filter(l => !existAddrs.has(l.address));
+      if (fresh.length) {
+        cache[type] = [...existing, ...fresh];
+        renderGrid(cache[type], type);
+        saveCachedListings();
+        addMsg('agent', `Found ${fresh.length} more ${type === 'rent' ? 'rentals' : 'homes for sale'} in ${currentCity}! They're added to the grid on the right. You can also open your **Profile** from the top menu to see all your saved listings.`);
+      } else {
+        addMsg('agent', `I couldn't find additional listings beyond what's already showing for ${currentCity}. You might want to try a nearby city or check Zillow/Apartments.com directly.`);
+      }
+    } catch {
+      removeTyping();
+      addMsg('agent', `Sorry, I had trouble fetching more listings right now. Try again in a moment.`);
+    }
+    document.getElementById('send-btn').disabled = false;
+    return;
+  }
+
+  // ── Post-analysis: detect profile updates ────────────────────────────────
+  if (analysisComplete) {
+    const update = detectProfileUpdate(msg);
+    if (update) {
+      const { key, val } = update;
+      const labels = { city:'city', age:'age', income:'income', credit:'credit score' };
+      const fmtVal = key === 'income' ? '$' + Number(val).toLocaleString() + '/yr' : String(val);
+      collect[key === 'income' ? 'income' : key === 'credit' ? 'credit' : key] = val;
+      if (key === 'income')  collect.income = val;
+      if (key === 'credit')  collect.credit = val;
+      if (key === 'age')     collect.age    = val;
+      if (key === 'city')  { collect.city   = val; currentCity = val; cache = {}; }
+      saveProfile({
+        age: collect.age, city: collect.city,
+        annual_income: collect.income, credit_score: collect.credit,
+      });
+      await agentSay(`Got it — I've updated your ${labels[key]} to **${fmtVal}**. Would you like me to re-run your analysis with the updated info? Just say **"yes, re-run"**!`);
+      chatHistory.push({ role: 'user', content: msg });
+      chatHistory.push({ role: 'assistant', content: `Updated ${labels[key]} to ${fmtVal}. Waiting for re-run confirmation.` });
+      document.getElementById('send-btn').disabled = false;
+      return;
+    }
+    // Check for re-run confirmation
+    if (/\b(yes|re.?run|rerun|refresh|redo|analyze again|new analysis)\b/i.test(msg) &&
+        chatHistory.slice(-2).some(m => m.content?.includes('re-run'))) {
+      addMsg('agent', 'Re-running analysis with your updated info...');
+      await runFromChat();
+      document.getElementById('send-btn').disabled = false;
+      return;
+    }
+  }
+
+  // ── Post-analysis guided chat ─────────────────────────────────────────────
+  chatHistory.push({ role: 'user', content: msg });
+  addTyping();
+  try {
+    // When analysis is done, prepend guidance context so the agent stays focused
+    const history = analysisComplete
+      ? [
+          { role: 'assistant', content: `I've completed the rent-vs-buy analysis for ${currentCity} (recommendation: ${primaryType}). I'm now focused on helping you connect with the listed properties.` },
+          ...chatHistory.slice(-8),
+        ]
+      : chatHistory.slice(-10);
+
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ message: msg, history }),
+    });
+    const d = await r.json();
+    removeTyping();
+    const reply = r.ok ? d.reply : (d.detail || 'Something went wrong.');
+    addMsg('agent', reply);
+    chatHistory.push({ role: 'assistant', content: reply });
+  } catch {
+    removeTyping();
+    addMsg('agent', 'Network error. Please try again.');
+  } finally {
+    document.getElementById('send-btn').disabled = false;
+  }
+}
+
+/* ── Collect done → run analysis ── */
+const fmt = n => '$' + Number(n).toLocaleString();
+let currentCity = '', primaryType = 'rent', activeTab = 'primary', cache = {};
+const ICONS  = { House:'🏠', Condo:'🏢', Apartment:'🏙', Townhouse:'🏘' };
+const THEMES = ['theme-0','theme-1','theme-2','theme-3','theme-4','theme-5'];
+const interestsSent = new Set();
+let   currentListings = [];
+
+async function runFromChat() {
+  addTyping();
+  await new Promise(r => setTimeout(r, 600));
+  removeTyping();
+
+  addMsg('agent', `Perfect! I have everything I need:\n• **City:** ${collect.city}\n• **Age:** ${collect.age}\n• **Income:** ${fmt(collect.income)}/yr\n• **Credit score:** ${collect.credit}\n\nAnalyzing your situation now...`);
+
+  // Show empty → keep empty (results show when done)
+  addTyping();
+
+  try {
+    const r = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ age: collect.age, city: collect.city, annual_income: collect.income, credit_score: collect.credit }),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(()=>({}))).detail || `Error ${r.status}`);
+    const d = await r.json();
+    removeTyping();
+
+    currentCity  = collect.city;
+    primaryType  = d.recommendation === 'BUY' ? 'buy' : 'rent';
+
+    // Save profile + analysis to DB (fire-and-forget)
+    saveProfile({ age: collect.age, city: collect.city, annual_income: collect.income, credit_score: collect.credit, last_analysis: d });
+
+    showResults(d);
+    setupTabs();
+    await loadListings('primary');   // await so cache is populated before saving
+    analysisComplete = true;
+    renderProfilePanel(null, allCachedListings());
+
+    const recWord = primaryType === 'buy' ? '**buying**' : '**renting**';
+    const guideNote = primaryType === 'buy'
+      ? 'Click **View Details** on any listing to see it on Zillow, Redfin, or Realtor.com. Platform listings show a **Connect with Seller** button.'
+      : 'Click **View Details** on any listing to see it on Zillow or Apartments.com. Platform listings show a **Connect with Seller** button.';
+    addMsg('agent', `Based on your profile, I recommend ${recWord} in ${currentCity}. ${d.headline}\n\n${guideNote}\n\nSay **"more options"** if you want different listings, or ask me about any property!`);
+    chatHistory.push({ role: 'assistant', content: `Recommendation: ${primaryType} in ${currentCity}. ${d.headline}` });
+
+  } catch (e) {
+    removeTyping();
+    addMsg('agent', `Sorry, I couldn't complete the analysis right now (${e.message}). Want to try again?`);
+    inCollect = true; cStep = 0;
+  }
+}
+
+function showResults(d) {
+  document.getElementById('state-empty').classList.remove('active');
+  document.getElementById('state-results').classList.add('active');
+
+  const buy = d.recommendation === 'BUY';
+  document.getElementById('v-top').className     = 'verdict-top ' + (buy ? 'buy' : 'rent');
+  document.getElementById('v-icon').textContent  = buy ? '🏠' : '🏢';
+  document.getElementById('v-badge').textContent = buy ? '✓ Recommended: Buy' : '✓ Recommended: Rent';
+  document.getElementById('v-headline').textContent = d.headline || d.recommendation;
+  document.getElementById('v-conf').textContent  = `Confidence: ${d.confidence || 'medium'}`;
+
+  const rentAmt = fmt(d.monthly_rent_estimate);
+  const buyAmt  = fmt(d.monthly_buy_estimate);
+  document.getElementById('c-rent').textContent = rentAmt;
+  document.getElementById('c-buy').textContent  = buyAmt;
+  // Highlight the cheaper (recommended) side
+  document.getElementById('c-rent').className = 'cost-amt' + (!buy ? ' green' : '');
+  document.getElementById('c-buy').className  = 'cost-amt' + (buy ? ' green' : '');
+  document.getElementById('cbox-rent').className = 'cost-box' + (!buy ? ' winner' : '');
+  document.getElementById('cbox-buy').className  = 'cost-box' + (buy ? ' winner' : '');
+
+  document.getElementById('reasons').innerHTML  = (d.reasons||[]).map(r=>`<li>${r}</li>`).join('');
+  document.getElementById('risks').innerHTML    = (d.risk_factors||[]).map(r=>`<li>${r}</li>`).join('');
+  document.getElementById('timeline').textContent = d.timeline || '';
+  document.getElementById('r-city-title').textContent = `Analysis for ${currentCity}`;
+  document.getElementById('r-city-sub').textContent   = `Age ${collect.age} · $${(collect.income/1000).toFixed(0)}k/yr · Credit ${collect.credit}`;
+}
+
+function setupTabs() {
+  const buy = primaryType === 'buy';
+  document.getElementById('tab-primary').textContent = buy ? '🏠 Homes for Sale' : '🏢 Rentals';
+  document.getElementById('tab-other').textContent   = buy ? '🏢 Rentals Nearby' : '🏠 Homes for Sale';
+  document.getElementById('l-title').textContent     = (buy ? 'Homes for sale' : 'Rentals') + ' in ' + currentCity;
+  document.getElementById('listings-section').style.display = 'block';
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-primary').classList.toggle('active', tab==='primary');
+  document.getElementById('tab-other').classList.toggle('active', tab==='other');
+  const type = tab==='primary' ? primaryType : (primaryType==='buy'?'rent':'buy');
+  document.getElementById('l-title').textContent = (type==='buy'?'Homes for sale':'Rentals') + ' in ' + currentCity;
+  loadListings(tab);
+}
+
+/* ── DB helpers ── */
+function saveProfile(patch) {
+  fetch('/auth/profile', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify(patch),
+  }).catch(() => {});
+}
+
+function allCachedListings() {
+  return [...(cache['rent']||[]), ...(cache['buy']||[])];
+}
+
+function saveCachedListings() {
+  saveProfile({ cached_listings: allCachedListings() });
+}
+
+/* ── More-options detection ── */
+const MORE_OPTIONS_RE = [
+  /\b(more|other|different|additional)\s+(options?|listings?|properties|places|choices|results?)\b/i,
+  /\bshow\s+(me\s+)?(more|other|different|new)\b/i,
+  /\b(these|this)\s+(don'?t|do\s+not|isn'?t|is\s+not)\s+(work|fit|meet|match|suit)\b/i,
+  /\b(bad|high|unsafe?)\s+(crime|area|neighborhood)\b/i,
+  /\bmore\s+options\b/i,
+  /\bsomething\s+(else|different|better)\b/i,
+  /\b(not\s+)?(happy|satisfied|good)\s+with\s+(these|this|them)\b/i,
+  /\bdon'?t\s+like\s+(these|this|them|any)\b/i,
+];
+function wantsMore(s) { return MORE_OPTIONS_RE.some(p => p.test(s)); }
+
+/* ── Profile-update detection via chat ── */
+const UPDATE_PATTERNS = [
+  { re: /\bmy\s+(annual\s+)?income\s+(?:is|changed|went|went\s+up|went\s+down|is\s+now)\s+(?:to\s+)?(\$?[\d,]+k?)/i,
+    key:'income', extract(m){ let v=m[2].toLowerCase().replace(/[$,]/g,''); if(v.endsWith('k'))v=parseFloat(v)*1000; else v=parseFloat(v); return isFinite(v)&&v>=10000?Math.round(v):null; } },
+  { re: /\bi\s+(?:now\s+)?(?:make|earn|get)\s+(\$?[\d,]+k?)/i,
+    key:'income', extract(m){ let v=m[1].toLowerCase().replace(/[$,]/g,''); if(v.endsWith('k'))v=parseFloat(v)*1000; else v=parseFloat(v); return isFinite(v)&&v>=10000?Math.round(v):null; } },
+  { re: /\bmy\s+credit\s+(?:score\s+)?(?:is|changed|went|is\s+now)\s+(?:to\s+)?(\d{3})/i,
+    key:'credit', extract(m){ const n=parseInt(m[1]); return n>=300&&n<=850?n:null; } },
+  { re: /\bi'?m\s+(?:now\s+)?(\d{1,3})\s+years?\s+old/i,
+    key:'age', extract(m){ const n=parseInt(m[1]); return n>=18&&n<=100?n:null; } },
+  { re: /\bi\s+(?:moved|relocated|am\s+now\s+in|live\s+in|am\s+looking\s+in)\s+(?:to\s+)?([A-Za-z][A-Za-z\s,]+?)(?:[!?.;]|$)/i,
+    key:'city', extract(m){ return m[1].trim().replace(/[,.\s]+$/,''); } },
+];
+function detectProfileUpdate(s) {
+  for (const p of UPDATE_PATTERNS) {
+    const m = s.match(p.re);
+    if (m) { const val = p.extract(m); if (val !== null) return { key: p.key, val }; }
+  }
+  return null;
+}
+
+/* ── Profile Panel ── */
+function renderProfilePanel(profile, listings) {
+  const p = profile || {};
+  const c = collect;
+  const av = document.getElementById('pp-avatar');
+  av.textContent = initials;
+  av.className   = 'pp-big-avatar ' + (isSeller ? 'seller' : 'buyer');
+  document.getElementById('pp-name').textContent  = user?.full_name || '';
+  document.getElementById('pp-email').textContent = user?.email || '';
+  const rb = document.getElementById('pp-role');
+  rb.textContent = roleLabel;
+  rb.className   = 'pp-role-badge ' + (isSeller ? 'seller' : 'buyer');
+
+  const city   = c.city   || p.city             || null;
+  const age    = c.age    || p.age              || null;
+  const income = c.income || p.annual_income    || null;
+  const credit = c.credit || p.credit_score     || null;
+
+  const setVal = (id, v, fmt) => {
+    const el = document.getElementById(id);
+    if (v) { el.textContent = fmt ? fmt(v) : v; el.className = 'pp-stat-value'; }
+    else   { el.textContent = 'Not set'; el.className = 'pp-stat-value empty'; }
+  };
+  setVal('pp-city',   city,   null);
+  setVal('pp-age',    age,    null);
+  setVal('pp-income', income, v => '$' + Number(v).toLocaleString() + '/yr');
+  setVal('pp-credit', credit, null);
+
+  const cached = listings || [];
+  document.getElementById('pp-count').textContent = cached.length;
+  const grid = document.getElementById('pp-listings-grid');
+  if (!cached.length) {
+    grid.innerHTML = '<div class="pp-empty" style="grid-column:1/-1;">No listings cached yet.</div>';
+    return;
+  }
+  grid.innerHTML = cached.map((l, i) => {
+    const icon = ICONS[l.property_type] || '🏠';
+    const th   = THEMES[i % THEMES.length];
+    const ph   = l.photo_url
+      ? `<img src="${l.photo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.classList.add('${th}');this.remove();" />`
+      : `<span>${icon}</span>`;
+    const isRent = l.listing_type === 'rent';
+    return `<div class="pp-listing-card" onclick="closeProfile();openModal(${i + (cache[primaryType]||[]).indexOf(l) >= 0 ? (cache[primaryType]||[]).indexOf(l) : i})">
+      <div class="pp-listing-photo ${l.photo_url?'':th}">${ph}</div>
+      <div class="pp-listing-body">
+        <div class="pp-listing-price">${l.price ? '$'+Number(l.price).toLocaleString()+(isRent?'/mo':'') : '—'}</div>
+        <div class="pp-listing-meta">${[l.beds?`🛏${l.beds}`:'', l.baths?`🚿${l.baths}`:''].filter(Boolean).join(' · ')}</div>
+        <div class="pp-listing-addr">${l.address||'—'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openProfile() {
+  document.getElementById('user-dropdown').classList.remove('open');
+  document.getElementById('user-pill').classList.remove('open');
+  renderProfilePanel(null, allCachedListings());
+  document.getElementById('profile-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeProfile() {
+  document.getElementById('profile-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function refreshMoreListings() {
+  const btn = document.getElementById('pp-refresh-btn');
+  btn.disabled = true; btn.textContent = 'Fetching…';
+  const type   = primaryType;
+  const offset = (cache[type]||[]).length;
+  try {
+    const r = await fetch(`/api/listings?city=${encodeURIComponent(currentCity)}&listing_type=${type}&offset=${offset}`);
+    if (!r.ok) throw new Error('Failed');
+    const d = await r.json();
+    const existing = cache[type] || [];
+    const existAddrs = new Set(existing.map(l => l.address));
+    const fresh = (d.listings || []).filter(l => !existAddrs.has(l.address));
+    cache[type] = [...existing, ...fresh];
+    renderGrid(cache[type], type);
+    saveCachedListings();
+    renderProfilePanel(null, allCachedListings());
+    btn.textContent = `↺ Got ${fresh.length} New`;
+  } catch {
+    btn.textContent = '↺ Failed';
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => { btn.textContent = '↺ More Listings'; }, 3000);
+  }
+}
+
+function updateProfileFromPanel() {
+  closeProfile();
+  // Reset collect and restart Q&A
+  Object.assign(collect, { city:null, age:null, income:null, credit:null });
+  cStep = 0; inCollect = true;
+  agentSay(`Sure! What would you like to update? I can change your **city**, **age**, **income**, or **credit score** — just tell me what changed.`);
+}
+
+async function loadListings(tab) {
+  const type = tab==='primary' ? primaryType : (primaryType==='buy'?'rent':'buy');
+  const wrap = document.getElementById('listings-wrap');
+  if (cache[type]) { renderGrid(cache[type], type); return; }
+
+  wrap.innerHTML = `<div class="listings-grid">${Array(6).fill(0).map(()=>`
+    <div class="sk-card"><div class="sk sk-photo"></div>
+    <div class="sk-body"><div class="sk sk-line" style="width:50%;height:16px;margin-bottom:10px;"></div>
+    <div class="sk sk-line" style="width:70%;"></div><div class="sk sk-line" style="width:90%;"></div>
+    <div class="sk sk-line" style="width:60%;margin-top:10px;height:26px;border-radius:7px;"></div>
+    </div></div>`).join('')}</div>`;
+
+  try {
+    const r = await fetch(`/api/listings?city=${encodeURIComponent(currentCity)}&listing_type=${type}`);
+    if (!r.ok) throw new Error('Failed');
+    const d = await r.json();
+    cache[type] = d.listings;
+    renderGrid(d.listings, type);
+    saveCachedListings();
+  } catch {
+    wrap.innerHTML = `<p style="color:var(--muted);padding:20px;font-size:13px;">Could not load listings — check your RENTCAST_API_KEY.</p>`;
+  }
+}
+
+function card(l, i, isRent) {
+  const icon    = ICONS[l.property_type] || '🏠';
+  const theme   = THEMES[i % THEMES.length];
+  const isNew   = l.days_on_market <= 7;
+  const daysLbl = l.days_on_market === 0 ? 'Listed today' : `${l.days_on_market}d ago`;
+  const addr    = [l.address, l.neighborhood].filter(Boolean).join(' · ');
+  const photoHtml = l.photo_url
+    ? `<img src="${l.photo_url}" alt="property" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.classList.add('${theme}');this.remove();" />`
+    : `<span>${icon}</span>`;
+  const intSent = interestsSent.has(String(i)+'_'+l.address);
+  const iBtn = l.listing_id
+    ? `<button class="lcard-ibtn${intSent?' sent':''}" id="ibtn-${i}" onclick="expressInterest('${l.listing_id}',${i})">${intSent?'✓ Interest Sent':'Connect with Seller'}</button>`
+    : '';
+  return `
+    <div class="lcard">
+      <div id="cp-${i}" class="lcard-photo ${l.photo_url?'':theme}" ${l.photo_url?'style="background:var(--card2);"':''}>
+        ${photoHtml}
+        ${isNew?'<div class="lcard-badge">New</div>':''}
+        ${l.platform?'<div class="lcard-badge" style="background:#7c3aed;">Defrost</div>':''}
+        <div class="lcard-days">${daysLbl}</div>
+        <div class="lcard-type">${l.property_type||'Home'}</div>
+      </div>
+      <div class="lcard-body">
+        <div class="lcard-price ${isRent?'rent':''}">${l.price?fmt(l.price):'—'}</div>
+        <div class="lcard-meta">${l.beds?`<span>🛏 ${l.beds}</span>`:''}${l.baths?`<span>🚿 ${l.baths}</span>`:''}${l.sqft?`<span>📐 ${Number(l.sqft).toLocaleString()}</span>`:''}</div>
+        <div class="lcard-address">${addr}</div>
+        <button class="lcard-btn" onclick="openModal(${i})">View Details →</button>
+        ${iBtn}
+      </div>
+    </div>`;
+}
+
+function renderGrid(listings, type) {
+  currentListings = listings;
+  const isRent = type === 'rent';
+  const wrap = document.getElementById('listings-wrap');
+  if (!listings || !listings.length) {
+    wrap.innerHTML = `<div style="text-align:center;padding:48px 24px;">
+      <div style="font-size:40px;margin-bottom:14px;">🔍</div>
+      <p style="font-size:15px;font-weight:700;margin-bottom:8px;">No listings found in ${currentCity}</p>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">
+        ${type==='rent'?'Try Zillow, Apartments.com, or Realtor.com for this area.':'Try Zillow, Redfin, or Realtor.com for this area.'}
+      </p>
+    </div>`;
+    return;
+  }
+  wrap.innerHTML = `<div class="listings-grid">${listings.map((l,i)=>card(l,i,isRent)).join('')}</div>`;
+  listings.forEach((l,i) => fetchPhoto(l.address, i));
+}
+
+async function fetchPhoto(address, idx) {
+  if (!address) return;
+  try {
+    const r = await fetch(`/api/listing-photo?address=${encodeURIComponent(address)}`);
+    const d = await r.json();
+    if (!d.photo_url) return;
+    const cp = document.getElementById(`cp-${idx}`);
+    if (cp) cp.innerHTML = `<img src="${d.photo_url}" alt="listing" style="width:100%;height:100%;object-fit:cover;">`;
+    if (currentListings[idx]) currentListings[idx].photo_url = d.photo_url;
+  } catch {}
+}
+
+async function expressInterest(listingId, idx) {
+  const btn = document.getElementById('ibtn-'+idx);
+  if (!btn || btn.classList.contains('sent')) return;
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  try {
+    const r = await fetch(`/api/listings/${listingId}/interest`, {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + token },
+    });
+    if (r.ok || r.status === 409) {
+      btn.textContent = '✓ Interest Sent'; btn.classList.add('sent');
+      interestsSent.add(String(idx)+'_'+(currentListings[idx]?.address||''));
+    } else { btn.textContent = 'Connect with Seller'; btn.disabled = false; }
+  } catch { btn.textContent = 'Connect with Seller'; btn.disabled = false; }
+}
+
+function resetBuyer() {
+  Object.assign(collect, { city:null, age:null, income:null, credit:null });
+  cStep = 0; inCollect = true; cache = {}; currentCity = '';
+  document.getElementById('state-results').classList.remove('active');
+  document.getElementById('state-empty').classList.add('active');
+  document.getElementById('listings-section').style.display = 'none';
+  agentSay(`Sure! Let's start fresh.\n\n${Qs[0].ask}`);
+}
+
+/* ── Listing modal ── */
+function openModal(i) {
+  const l = currentListings[i];
+  if (!l) return;
+  const isRent = l.listing_type === 'rent';
+  const icon  = ICONS[l.property_type] || '🏠';
+  const theme = THEMES[i % THEMES.length];
+  const isNew = l.days_on_market <= 7;
+  const satUrl = (l.latitude&&l.longitude)
+    ? `https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=${l.longitude-.0008},${l.latitude-.0008},${l.longitude+.0008},${l.latitude+.0008}&bboxSR=4326&imageSR=4326&size=600,400&format=png&f=image`
+    : '';
+  const photoHtml = l.photo_url
+    ? `<img src="${l.photo_url}" alt="property" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='${satUrl}';this.onerror=null;" />`
+    : satUrl ? `<img src="${satUrl}" alt="property" style="width:100%;height:100%;object-fit:cover;" />` : `<span>${icon}</span>`;
+
+  let mapHtml = '';
+  if (l.latitude&&l.longitude) {
+    const lat=l.latitude, lon=l.longitude, d=.004;
+    mapHtml = `<div class="modal-section"><h3>Location</h3><div class="modal-map">
+      <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-d}%2C${lat-d}%2C${lon+d}%2C${lat+d}&layer=mapnik&marker=${lat}%2C${lon}" loading="lazy"></iframe>
+    </div></div>`;
+  }
+
+  const zQ = encodeURIComponent((l.address||'').replace(/,/g,''));
+  const rQ = encodeURIComponent(l.address||'');
+  const platLinks = isRent ? `
+    <a class="modal-plat-btn" href="https://www.zillow.com/homes/for_rent/${zQ}_rb/" target="_blank">🏠 Zillow</a>
+    <a class="modal-plat-btn" href="https://www.apartments.com/search/?term=${rQ}" target="_blank">🏢 Apartments.com</a>
+    <a class="modal-plat-btn" href="https://www.realtor.com/realestateandhomes-search/?query=${rQ}" target="_blank">🔑 Realtor.com</a>
+  ` : `
+    <a class="modal-plat-btn" href="https://www.zillow.com/homes/for_sale/${zQ}_rb/" target="_blank">🏠 Zillow</a>
+    <a class="modal-plat-btn" href="https://www.realtor.com/realestateandhomes-search/?query=${rQ}" target="_blank">🔑 Realtor.com</a>
+    <a class="modal-plat-btn" href="https://www.redfin.com/city/search?query=${rQ}" target="_blank">🔴 Redfin</a>
+  `;
+
+  const intSent = interestsSent.has(String(i)+'_'+l.address);
+  const connectBtn = l.listing_id
+    ? `<button class="modal-interest-btn${intSent?' sent':''}" onclick="expressInterest('${l.listing_id}',${i});this.textContent='✓ Interest Sent';this.classList.add('sent')">
+         ${intSent ? '✓ Interest Sent' : '🤝 Connect with Seller\'s Agent'}
+       </button>`
+    : '';
+
+  document.getElementById('modal-inner').innerHTML = `
+    <div class="modal-photo ${l.photo_url?'':theme}">
+      ${photoHtml}
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      ${isNew?'<div class="modal-badge-new">NEW</div>':''}
+    </div>
+    <div class="modal-body">
+      ${connectBtn}
+      <div class="modal-price ${isRent?'rent':''}">${l.price?fmt(l.price):'—'}</div>
+      <div class="modal-address">${l.address}${l.neighborhood?' · '+l.neighborhood:''}</div>
+      <div class="modal-stats">
+        <div class="modal-stat"><div class="ms-val">${l.beds||'—'}</div><div class="ms-lbl">Beds</div></div>
+        <div class="modal-stat"><div class="ms-val">${l.baths||'—'}</div><div class="ms-lbl">Baths</div></div>
+        <div class="modal-stat"><div class="ms-val">${l.sqft?Number(l.sqft).toLocaleString():'—'}</div><div class="ms-lbl">Sq Ft</div></div>
+        <div class="modal-stat"><div class="ms-val">${l.days_on_market===0?'Today':l.days_on_market}</div><div class="ms-lbl">${l.days_on_market===0?'Listed':'Days Listed'}</div></div>
+      </div>
+      <div class="modal-section"><h3>Property Details</h3>
+        <div class="modal-detail-grid">
+          <div class="modal-detail-row"><span>Type</span><span>${l.property_type||'—'}</span></div>
+          ${l.year_built?`<div class="modal-detail-row"><span>Year Built</span><span>${l.year_built}</span></div>`:''}
+          ${l.lot_size?`<div class="modal-detail-row"><span>Lot Size</span><span>${Number(l.lot_size).toLocaleString()} sqft</span></div>`:''}
+          ${l.zip_code?`<div class="modal-detail-row"><span>ZIP</span><span>${l.zip_code}</span></div>`:''}
+        </div>
+      </div>
+      ${mapHtml}
+      <div class="modal-section"><h3>View Full Listing On</h3>
+        <div class="modal-platforms">${platLinks}</div>
+      </div>
+    </div>`;
+  document.getElementById('listing-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('listing-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ── Seller Dashboard ── */
+let listingType = 'rent';
+
+function switchDash(pane) {
+  document.querySelectorAll('.dtab').forEach((t,i) => {
+    t.classList.toggle('active', ['listings','add','interests'][i]===pane);
+  });
+  document.querySelectorAll('.dash-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-'+pane).classList.add('active');
+  if (pane==='listings') loadMyListings();
+  if (pane==='interests') loadInterests();
+}
+
+function setListType(type) {
+  listingType = type;
+  document.getElementById('lt-rent').className = 'type-btn'+(type==='rent'?' active':'');
+  document.getElementById('lt-sale').className = 'type-btn'+(type==='sale'?' active':'');
+}
+
+async function createListing() {
+  const err  = document.getElementById('listing-err');
+  err.style.display = 'none';
+  const title   = document.getElementById('lt-title').value.trim();
+  const address = document.getElementById('lt-address').value.trim();
+  const city    = document.getElementById('lt-city').value.trim();
+  const price   = parseInt(document.getElementById('lt-price').value);
+  if (!title||!address||!city||!price) {
+    err.textContent='Title, address, city, and price are required.'; err.style.display='block'; return;
+  }
+  try {
+    const r = await fetch('/api/my-listings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        listing_type: listingType, title, address, city, price,
+        bedrooms:   parseInt(document.getElementById('lt-beds').value)||null,
+        bathrooms:  parseFloat(document.getElementById('lt-baths').value)||null,
+        sqft:       parseInt(document.getElementById('lt-sqft').value)||null,
+        description: document.getElementById('lt-desc').value.trim()||null,
+        agent_rules: document.getElementById('lt-rules').value.trim()||null,
+      }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail||'Failed');
+    switchDash('listings');
+  } catch(e) { err.textContent=e.message; err.style.display='block'; }
+}
+
+async function loadMyListings() {
+  const wrap = document.getElementById('my-listings-wrap');
+  try {
+    const r = await fetch('/api/my-listings', { headers: { 'Authorization': 'Bearer '+token } });
+    const listings = await r.json();
+    if (!listings.length) {
+      wrap.innerHTML='<div class="empty-state"><div class="es-icon">🏠</div><p>No listings yet.<br>Click <strong>+ Add Listing</strong> to get started.</p></div>';
+      return;
+    }
+    const fp = (p,t) => '$'+Number(p).toLocaleString()+(t==='rent'?'/mo':'');
+    wrap.innerHTML = listings.map(l=>`
+      <div class="my-listing-card">
+        <div class="ml-icon">${l.listing_type==='rent'?'🏢':'🏠'}</div>
+        <div class="ml-info">
+          <div class="ml-title">${l.title}</div>
+          <div class="ml-meta">
+            <span>${l.address}</span>
+            ${l.bedrooms?`<span>🛏 ${l.bedrooms}</span>`:''}
+            ${l.bathrooms?`<span>🚿 ${l.bathrooms}</span>`:''}
+            <span class="ml-badge ${l.listing_type}">${l.listing_type==='rent'?'For Rent':'For Sale'}</span>
+          </div>
+        </div>
+        <div class="ml-price">${fp(l.price,l.listing_type)}</div>
+      </div>`).join('');
+  } catch { wrap.innerHTML='<p style="color:var(--muted);padding:20px;">Failed to load listings.</p>'; }
+}
+
+async function loadInterests() {
+  const wrap = document.getElementById('interests-wrap');
+  try {
+    const r = await fetch('/api/interests/received', { headers: { 'Authorization': 'Bearer '+token } });
+    const interests = await r.json();
+    if (!interests.length) {
+      wrap.innerHTML='<div class="empty-state"><div class="es-icon">👥</div><p>No interested buyers yet.</p></div>';
+      return;
+    }
+    wrap.innerHTML = interests.map(int => {
+      const ini = (int.buyer_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      const incomeOk = int.annual_income&&int.listing_price ? int.annual_income>=int.listing_price*36 : null;
+      const statusHtml = int.status!=='pending'
+        ? `<span class="status-badge ${int.status}">${int.status.charAt(0).toUpperCase()+int.status.slice(1)}</span>`
+        : `<button class="btn-approve" onclick="updateInterest('${int.id}','approved',this)">Approve</button>
+           <button class="btn-decline" onclick="updateInterest('${int.id}','declined',this)">Decline</button>`;
+      return `
+        <div class="interest-card" id="ic-${int.id}">
+          <div class="ic-top">
+            <div class="ic-avatar">${ini}</div>
+            <div class="ic-info">
+              <div class="ic-name">${int.buyer_name}</div>
+              <div class="ic-email">${int.buyer_email}</div>
+              <div class="ic-stats">
+                ${int.age?`<div class="ic-stat"><div class="sv">${int.age}</div><div class="sl">Age</div></div>`:''}
+                ${int.credit_score?`<div class="ic-stat"><div class="sv">${int.credit_score}</div><div class="sl">Credit</div></div>`:''}
+                ${int.annual_income?`<div class="ic-stat"><div class="sv">$${(int.annual_income/1000).toFixed(0)}k</div><div class="sl">Income/yr</div></div>`:''}
+                ${incomeOk!==null?`<div class="ic-stat"><div class="sv">${incomeOk?'✅':'⚠️'}</div><div class="sl">3× Rule</div></div>`:''}
+              </div>
+            </div>
+          </div>
+          <div class="ic-listing">Interested in: <strong>${int.listing_title}</strong> · ${int.listing_address}</div>
+          ${int.buyer_message?`<div class="ic-msg">"${int.buyer_message}"</div>`:''}
+          <div class="ic-actions">${statusHtml}</div>
+        </div>`;
+    }).join('');
+  } catch { wrap.innerHTML='<p style="color:var(--muted);padding:20px;">Failed to load.</p>'; }
+}
+
+async function updateInterest(id, status, btn) {
+  try {
+    const r = await fetch(`/api/interests/${id}?status=${status}`, {
+      method: 'PATCH', headers: { 'Authorization': 'Bearer '+token },
+    });
+    if (r.ok) {
+      document.querySelector(`#ic-${id} .ic-actions`).innerHTML =
+        `<span class="status-badge ${status}">${status.charAt(0).toUpperCase()+status.slice(1)}</span>`;
+    }
+  } catch {}
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') closeModal();
+});
+</script>
+</body>
+</html>

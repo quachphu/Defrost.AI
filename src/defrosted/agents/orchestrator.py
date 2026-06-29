@@ -1,6 +1,6 @@
 """
 Agent orchestrator — the LangGraph state machine that runs one verified
-tool-use loop with Claude.
+tool-use loop with Groq (free tier, OpenAI-compatible API).
 
 The graph has exactly two nodes and one decision:
 
@@ -13,15 +13,21 @@ The non-negotiable detail lives in ``execute_tools``: after a tool runs we call
 model never gets to assume a tool succeeded — it is told whether the provider
 actually confirmed it (Karpathy: never trust the LLM's self-report).
 
-Heavy imports (langgraph, anthropic) are top-level: this module is only loaded
-inside Temporal activities / workers that have the ``infra`` extra installed.
+Groq uses the OpenAI message/tool format which differs from Anthropic's:
+  - Tools schemas: {"type": "function", "function": {...}}  (not {"name":..., "input_schema":...})
+  - Tool calls come back on choice.message.tool_calls  (not content blocks)
+  - Tool results go in as role="tool" messages  (not role="user" content blocks)
+
+_to_openai_schema() converts the existing Anthropic-format describe() output
+from each AgentTool so no tool implementations need to change.
 """
 from __future__ import annotations
 
+import json
 from typing import Any, TypedDict
 
 import structlog
-from anthropic import AsyncAnthropic
+from groq import AsyncGroq
 from langgraph.graph import END, StateGraph
 
 from ..config import Settings
@@ -29,13 +35,15 @@ from .tools.base import AgentTool
 
 log = structlog.get_logger(__name__)
 
-DEFAULT_MODEL = "claude-sonnet-4-20250514"
-COMPLEX_MODEL = "claude-opus-4-8"
+# llama-3.3-70b-versatile: confirmed working tool calling on Groq free tier.
+# openai/gpt-oss-20b also works (faster, smaller). gpt-oss-120b does not call tools.
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
+COMPLEX_MODEL = "llama-3.3-70b-versatile"
 MAX_TOKENS = 2048
 
 
 class AgentState(TypedDict):
-    # The running Anthropic message list (user/assistant turns + tool results).
+    # The running message list in OpenAI format (user/assistant/tool turns).
     messages: list[dict[str, Any]]
     # Set True once the model produces a turn with no tool calls.
     done: bool
@@ -43,7 +51,7 @@ class AgentState(TypedDict):
 
 class AgentOrchestrator:
     """
-    Runs a tool-using Claude agent to completion over a registry of AgentTools.
+    Runs a tool-using Groq agent to completion over a registry of AgentTools.
 
     Usage:
         orch = AgentOrchestrator(settings, tools=[email_tool, sms_tool])
@@ -57,12 +65,33 @@ class AgentOrchestrator:
         *,
         model: str = DEFAULT_MODEL,
     ) -> None:
-        self._client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        self._client = AsyncGroq(api_key=settings.groq_api_key)
         self._tools_by_name: dict[str, AgentTool] = {t.tool_name: t for t in tools}
-        self._tool_schemas = [t.describe() for t in tools]
+        # Convert from Anthropic describe() format → OpenAI/Groq format
+        self._tool_schemas = [self._to_openai_schema(t.describe()) for t in tools]
         self._model = model
         self._system_prompt: str | None = None
         self._graph = self._build_graph()
+
+    @staticmethod
+    def _to_openai_schema(anthropic_schema: dict[str, Any]) -> dict[str, Any]:
+        """
+        AgentTool.describe() returns Anthropic format:
+          {"name": ..., "description": ..., "input_schema": {...}}
+
+        Groq/OpenAI expects:
+          {"type": "function", "function": {"name": ..., "description": ..., "parameters": {...}}}
+        """
+        return {
+            "type": "function",
+            "function": {
+                "name": anthropic_schema["name"],
+                "description": anthropic_schema.get("description", ""),
+                "parameters": anthropic_schema.get(
+                    "input_schema", {"type": "object", "properties": {}}
+                ),
+            },
+        }
 
     def _build_graph(self) -> Any:
         graph = StateGraph(AgentState)
@@ -77,63 +106,82 @@ class AgentOrchestrator:
         return graph.compile()
 
     async def _call_model(self, state: AgentState) -> AgentState:
-        response = await self._client.messages.create(
+        # Groq/OpenAI: system prompt is the first message, not a separate param
+        full_messages = [
+            {"role": "system", "content": self._system_prompt or ""},
+            *state["messages"],
+        ]
+
+        response = await self._client.chat.completions.create(
             model=self._model,
             max_tokens=MAX_TOKENS,
-            system=self._system_prompt or "",
-            messages=state["messages"],
+            messages=full_messages,
             tools=self._tool_schemas,
+            tool_choice="auto",
         )
-        assistant_content = [block.model_dump() for block in response.content]
-        state["messages"].append({"role": "assistant", "content": assistant_content})
-        tool_calls = [b for b in assistant_content if b.get("type") == "tool_use"]
-        state["done"] = len(tool_calls) == 0
+
+        choice = response.choices[0]
+        msg = choice.message
+
+        # Build assistant message in OpenAI format
+        assistant_msg: dict[str, Any] = {
+            "role": "assistant",
+            "content": msg.content,
+        }
+        if msg.tool_calls:
+            assistant_msg["tool_calls"] = [
+                {
+                    "id": tc.id,
+                    "type": "function",
+                    "function": {
+                        "name": tc.function.name,
+                        "arguments": tc.function.arguments,
+                    },
+                }
+                for tc in msg.tool_calls
+            ]
+
+        state["messages"].append(assistant_msg)
+        state["done"] = not bool(msg.tool_calls)
         return state
 
     async def _execute_tools(self, state: AgentState) -> AgentState:
-        last = state["messages"][-1]["content"]
-        tool_results: list[dict[str, Any]] = []
-        for block in last:
-            if block.get("type") != "tool_use":
-                continue
-            tool = self._tools_by_name.get(block["name"])
+        last = state["messages"][-1]
+        tool_calls = last.get("tool_calls", [])
+
+        for tc in tool_calls:
+            tool_name = tc["function"]["name"]
+            tool_input: dict[str, Any] = json.loads(tc["function"]["arguments"])
+            tool = self._tools_by_name.get(tool_name)
+
             if tool is None:
-                tool_results.append(self._tool_error(block["id"], f"unknown tool {block['name']}"))
-                continue
+                content = f"ERROR: unknown tool {tool_name}"
+            else:
+                result = await tool.execute(tool_input)
+                verified = False
+                if result.success and result.provider_reference is not None:
+                    verified = await tool.verify(result.provider_reference)
 
-            result = await tool.execute(block["input"])
-            verified = False
-            if result.success and result.provider_reference is not None:
-                verified = await tool.verify(result.provider_reference)
-
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": block["id"],
-                "is_error": not (result.success and verified),
-                "content": (
+                content = (
                     f"{result.message} (verified={verified})"
                     if result.success
-                    else result.message
-                ),
+                    else f"ERROR: {result.message}"
+                )
+                log.info(
+                    "tool_executed",
+                    tool=tool_name,
+                    success=result.success,
+                    verified=verified,
+                )
+
+            # OpenAI/Groq: each tool result is its own message with role="tool"
+            state["messages"].append({
+                "role": "tool",
+                "tool_call_id": tc["id"],
+                "content": content,
             })
-            log.info(
-                "tool_executed",
-                tool=tool.tool_name,
-                success=result.success,
-                verified=verified,
-            )
 
-        state["messages"].append({"role": "user", "content": tool_results})
         return state
-
-    @staticmethod
-    def _tool_error(tool_use_id: str, message: str) -> dict[str, Any]:
-        return {
-            "type": "tool_result",
-            "tool_use_id": tool_use_id,
-            "is_error": True,
-            "content": message,
-        }
 
     async def run(self, system_prompt: str, user_prompt: str) -> list[dict[str, Any]]:
         """Run the agent to completion and return the full message history."""
