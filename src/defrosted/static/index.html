@@ -4,18 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Defrost.AI — Your AI Real Estate Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #070d1a; --bg2: #0c1528; --card: #111827;
-      --border: #1e2d42; --primary: #3b82f6; --primary2: #2563eb;
-      --green: #10b981; --green2: #059669;
-      --text: #f1f5f9; --muted: #94a3b8; --muted2: #64748b;
+      --bg: #FFFFFF; --bg2: #F5F5F3; --card: #FFFFFF;
+      --border: #E5E5E2; --primary: #0A0A0A; --primary2: #262626;
+      --green: #15803D; --green2: #166534;
+      --text: #0A0A0A; --muted: #6B6B6B; --muted2: #9C9C9C;
+      --font-display: 'Inter Tight', 'Inter', -apple-system, sans-serif;
     }
     html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg); color: var(--text); overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ── Keyframes ── */
@@ -35,166 +40,164 @@
     /* ── Nav ── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      height: 62px; display: flex; align-items: center; justify-content: space-between;
-      padding: 0 48px; background: rgba(7,13,26,.9); backdrop-filter: blur(12px);
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
     }
-    .logo { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
-    .logo span { color: var(--green); }
-    .nav-actions { display: flex; gap: 10px; }
+    .logo { font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+    .logo span { color: var(--muted2); }
+    .nav-actions { display: flex; gap: 8px; align-items: center; }
     .btn-ghost {
-      background: transparent; border: 1px solid var(--border); color: var(--muted);
-      padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
-      cursor: pointer; transition: all .2s;
+      background: transparent; border: none; color: var(--text);
+      padding: 9px 16px; border-radius: 4px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: opacity .2s; font-family: inherit;
     }
-    .btn-ghost:hover { border-color: var(--primary); color: var(--text); }
+    .btn-ghost:hover { opacity: .6; }
     .btn-primary-nav {
-      background: var(--primary2); border: none; color: #fff;
-      padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: background .2s;
+      background: var(--primary); border: none; color: #fff;
+      padding: 10px 20px; border-radius: 4px; font-size: 11px; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; transition: background .2s; font-family: inherit;
     }
-    .btn-primary-nav:hover { background: var(--primary); }
+    .btn-primary-nav:hover { background: var(--primary2); }
 
     /* ──────────────────────────────────────
-       HERO  (matches demo layout exactly)
+       HERO
     ────────────────────────────────────── */
     .hero {
-      width: 100%; padding-top: 120px; padding-bottom: 0;
+      width: 100%; padding-top: 60px; padding-bottom: 0;
       background: var(--bg);
     }
     .hero-inner {
-      /* container mx-auto flex flex-col items-center px-4 py-16 text-center md:py-24 */
-      max-width: 900px; margin: 0 auto;
-      display: flex; flex-direction: column; align-items: center;
-      padding: 64px 24px 96px; text-align: center;
+      max-width: 1240px; margin: 0 auto;
+      display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr);
+      gap: 8px 64px; align-items: start;
+      padding: 72px 40px 40px; text-align: left;
+    }
+    .hero-eyebrow {
+      grid-column: 1 / -1;
+      font-size: 11px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase;
+      color: var(--muted2); margin-bottom: 24px;
+      display: inline-flex; align-items: center; gap: 12px;
+      animation: fadeUp .7s ease both;
+    }
+    .hero-eyebrow .chip {
+      background: var(--primary); color: #fff; padding: 4px 10px;
+      border-radius: 3px; letter-spacing: 1.2px;
     }
     .hero-inner h1 {
-      /* text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl */
-      font-size: clamp(36px, 5.5vw, 72px);
-      font-weight: 800; line-height: 1.1; letter-spacing: -2px;
-      margin-bottom: 24px;
+      grid-column: 1; grid-row: 2;
+      font-family: var(--font-display);
+      font-size: clamp(38px, 5.2vw, 68px);
+      font-weight: 600; line-height: 1.04; letter-spacing: -0.03em;
+      margin-bottom: 32px;
       animation: fadeUp .7s ease .1s both;
     }
-    /* bg-primary/20 p-2 rounded-md — the highlight box from the demo */
     .hero-inner h1 .hl {
-      background: rgba(59,130,246,.2);
-      color: var(--primary);
-      padding: 4px 12px;
-      border-radius: 10px;
-      display: inline;
+      background: none; color: inherit; padding: 0; border-radius: 0; display: inline;
     }
     .hero-inner p {
-      /* mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl */
-      margin-top: 0; max-width: 640px;
-      font-size: clamp(16px, 1.8vw, 20px); color: var(--muted);
-      line-height: 1.75; margin-bottom: 36px;
+      grid-column: 2; grid-row: 2;
+      margin-top: 10px; max-width: 340px; justify-self: end;
+      font-size: 14px; color: var(--muted);
+      line-height: 1.75; margin-bottom: 0;
       animation: fadeUp .7s ease .25s both;
     }
     .hero-btns {
-      /* mt-8 flex flex-wrap justify-center gap-4 */
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+      grid-column: 1; grid-row: 3;
+      display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 10px;
       animation: fadeUp .7s ease .4s both;
     }
-    /* Button size="lg" default — from shadcn */
     .btn-lg {
-      height: 44px; padding: 0 32px; border-radius: 8px;
-      font-size: 15px; font-weight: 600; cursor: pointer;
+      height: 48px; padding: 0 30px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+      cursor: pointer;
       display: inline-flex; align-items: center; justify-content: center;
       transition: all .2s; white-space: nowrap; border: none;
+      font-family: inherit;
     }
     .btn-filled {
       background: var(--primary); color: #fff;
-      box-shadow: 0 2px 12px rgba(59,130,246,.35);
     }
-    .btn-filled:hover { background: var(--primary2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,.4); }
+    .btn-filled:hover { background: var(--primary2); }
     .btn-outline {
-      background: transparent; color: var(--text);
-      border: 1px solid var(--border);
+      background: var(--bg); color: var(--text);
+      border: 1px solid #D4D4D0;
     }
-    .btn-outline:hover { background: var(--card); border-color: var(--primary); }
+    .btn-outline:hover { border-color: var(--text); }
 
     /* ──────────────────────────────────────
-       ANIMATED ROADMAP  (exact AnimatedRoadmap structure from demo)
+       ANIMATED ROADMAP  — full-bleed photo
     ────────────────────────────────────── */
     .roadmap-outer {
-      /* relative w-full max-w-4xl mx-auto py-24 */
-      position: relative; width: 100%; max-width: 900px;
-      margin: 0 auto; padding: 96px 24px;
+      position: relative; width: 100%; max-width: 1240px;
+      margin: 0 auto; padding: 48px 40px 96px;
     }
-    /* absolute inset-0 top-10 — the map background image */
     .roadmap-img-wrap {
-      position: absolute; inset: 0; top: 40px;
+      position: absolute; inset: 48px 40px 96px;
       pointer-events: none;
       animation: imgIn .8s ease .2s both;
     }
     .roadmap-img-wrap img {
       width: 100%; height: 100%; object-fit: cover;
-      border-radius: 20px; opacity: .18;
-      filter: saturate(.4) brightness(.6);
+      border-radius: 6px; opacity: 1;
+      filter: grayscale(.25) brightness(.72) contrast(1.05);
     }
-    /* relative h-[400px] — the inner content area */
     .roadmap-inner {
-      position: relative; height: 400px;
+      position: relative; height: 460px;
     }
     .roadmap-svg {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     }
     .roadmap-path {
       fill: none;
-      stroke: var(--primary);
-      stroke-width: 3;
+      stroke: #FFFFFF;
+      stroke-width: 2;
       stroke-linecap: round;
-      /* framer-motion uses dasharray "10 5" in the demo */
       stroke-dasharray: 10 5;
-      /* stroke-dashoffset driven by JS scroll */
+      opacity: .9;
     }
 
-    /* ── Milestone markers (MilestoneMarker component) ── */
+    /* ── Milestone markers ── */
     .ms {
-      /* absolute flex items-center gap-4 */
       position: absolute;
-      display: flex; align-items: center; gap: 16px;
-      /* animation: initial opacity 0 scale .5 → whileInView opacity 1 scale 1 */
+      display: flex; align-items: center; gap: 14px;
       opacity: 0; transform: scale(.5);
       transition: opacity .5s ease, transform .5s ease;
     }
     .ms.visible { opacity: 1; transform: scale(1); }
 
-    /* milestone positions from demo data */
     .ms-1 { top: 70%; left:  5%; }
     .ms-2 { top: 15%; left: 20%; }
     .ms-3 { top: 45%; left: 55%; }
     .ms-4 { top: 10%; right: 10%; }
 
-    /* relative flex h-8 w-8 items-center justify-center */
     .ms-dot-outer {
       position: relative; display: flex;
-      width: 32px; height: 32px;
+      width: 30px; height: 30px;
       align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    /* absolute h-3 w-3 rounded-full border-2 — the colored dot */
     .ms-dot {
       position: absolute;
-      width: 12px; height: 12px;
+      width: 10px; height: 10px;
       border-radius: 50%; border: 2px solid;
     }
-    .ms-dot.complete    { background: var(--green);   border-color: var(--green2); }
-    .ms-dot.inprogress  { background: var(--primary); border-color: var(--primary2); animation: pulse 1.8s infinite; }
-    .ms-dot.pending     { background: #334155;        border-color: #475569; }
-    /* absolute h-full w-full rounded-full bg-primary/10 — the ring */
+    .ms-dot.complete    { background: #FFFFFF; border-color: #FFFFFF; }
+    .ms-dot.inprogress  { background: #FFFFFF; border-color: #FFFFFF; animation: pulse 1.8s infinite; }
+    .ms-dot.pending     { background: rgba(255,255,255,.35); border-color: rgba(255,255,255,.5); }
     .ms-ring {
       position: absolute; inset: 0;
-      border-radius: 50%; background: rgba(59,130,246,.1);
+      border-radius: 50%; background: rgba(255,255,255,.18);
     }
-    /* rounded-full border bg-card px-4 py-2 text-sm font-medium text-card-foreground shadow-sm */
     .ms-label {
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      padding: 8px 16px;
-      font-size: 14px; font-weight: 500; color: var(--text);
-      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      border-radius: 4px;
+      border: none;
+      background: #FFFFFF;
+      padding: 8px 14px;
+      font-size: 12px; font-weight: 600; color: var(--text);
+      letter-spacing: .3px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.25);
       white-space: nowrap;
     }
 
@@ -202,144 +205,236 @@
        HOW IT WORKS
     ────────────────────────────────────── */
     .section-label {
-      font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--primary); margin-bottom: 12px;
+      font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted2); margin-bottom: 14px;
     }
     .section-title {
-      font-size: clamp(28px, 4vw, 44px); font-weight: 900;
-      letter-spacing: -1px; line-height: 1.15; margin-bottom: 16px;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.6vw, 44px); font-weight: 600;
+      letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 16px;
     }
-    .section-sub { font-size: 17px; color: var(--muted); max-width: 520px; line-height: 1.7; margin-bottom: 64px; }
+    .section-sub { font-size: 15px; color: var(--muted); max-width: 480px; line-height: 1.7; margin-bottom: 64px; }
 
-    section.works { padding: 100px 24px; }
-    .how-container { max-width: 1100px; margin: 0 auto; }
-    .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    section.works { padding: 110px 40px; background: var(--bg); }
+    .how-container { max-width: 1160px; margin: 0 auto; }
+    .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 
     .how-track {
       background: var(--card); border: 1px solid var(--border);
-      border-radius: 20px; padding: 32px; position: relative; overflow: hidden;
+      border-radius: 8px; padding: 36px; position: relative; overflow: hidden;
     }
-    .how-track::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
-    .how-track.buyer::before  { background: linear-gradient(90deg,#1d4ed8,var(--primary)); }
-    .how-track.seller::before { background: linear-gradient(90deg,var(--green2),var(--green)); }
-    .track-header { display:flex; align-items:center; gap:12px; margin-bottom:28px; }
-    .track-icon   { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; }
-    .track-icon.buyer  { background:rgba(59,130,246,.15); }
-    .track-icon.seller { background:rgba(16,185,129,.15); }
-    .track-title  { font-size:18px; font-weight:800; }
-    .track-badge  { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; margin-left:auto; }
-    .track-badge.buyer  { background:rgba(59,130,246,.15); color:var(--primary); }
-    .track-badge.seller { background:rgba(16,185,129,.15); color:var(--green); }
+    .how-track::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+    .how-track.buyer::before  { background: var(--text); }
+    .how-track.seller::before { background: #B5B5B0; }
+    .track-header { display:flex; align-items:center; gap:14px; margin-bottom:32px; }
+    .track-icon   {
+      width:42px; height:42px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+      background:var(--bg2); font-family:var(--font-display);
+      font-size:13px; font-weight:700; letter-spacing:.5px; color:var(--text);
+    }
+    .track-icon.buyer  { background:var(--text); color:#fff; }
+    .track-icon.seller { background:var(--bg2); color:var(--text); border:1px solid var(--border); }
+    .track-title  { font-family:var(--font-display); font-size:18px; font-weight:600; letter-spacing:-.01em; }
+    .track-badge  { font-size:10px; font-weight:600; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:3px; margin-left:auto; }
+    .track-badge.buyer  { background:var(--text); color:#fff; }
+    .track-badge.seller { background:transparent; color:var(--text); border:1px solid var(--text); }
     .steps-list { display:flex; flex-direction:column; }
-    .step-item { display:flex; gap:16px; padding-bottom:24px; }
+    .step-item { display:flex; gap:16px; padding-bottom:26px; }
     .step-item:last-child { padding-bottom:0; }
     .step-item:last-child .step-line { display:none; }
     .step-num-wrap { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
-    .step-num { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; }
-    .step-num.buyer  { background:var(--primary2); color:#fff; }
-    .step-num.seller { background:var(--green2);   color:#fff; }
-    .step-line { width:2px; flex:1; margin-top:6px; min-height:24px; }
-    .step-line.buyer  { background:rgba(59,130,246,.2); }
-    .step-line.seller { background:rgba(16,185,129,.2); }
+    .step-num { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; }
+    .step-num.buyer  { background:var(--text); color:#fff; }
+    .step-num.seller { background:#fff; color:var(--text); border:1px solid var(--text); }
+    .step-line { width:1px; flex:1; margin-top:6px; min-height:24px; }
+    .step-line.buyer  { background:var(--border); }
+    .step-line.seller { background:var(--border); }
     .step-body  { padding-top:4px; }
-    .step-name  { font-size:15px; font-weight:700; margin-bottom:4px; }
-    .step-desc  { font-size:13px; color:var(--muted); line-height:1.6; }
+    .step-name  { font-size:14px; font-weight:600; margin-bottom:4px; letter-spacing:-.01em; }
+    .step-desc  { font-size:13px; color:var(--muted); line-height:1.65; }
 
     /* ──────────────────────────────────────
        LEGAL
     ────────────────────────────────────── */
-    section.legal { padding:100px 24px; background:var(--bg2); }
-    .legal-container { max-width:1100px; margin:0 auto; }
-    .legal-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
-    .legal-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px; }
-    .legal-icon  { font-size:28px; margin-bottom:14px; }
-    .legal-title { font-size:16px; font-weight:800; margin-bottom:10px; }
-    .legal-list  { list-style:none; display:flex; flex-direction:column; gap:8px; }
-    .legal-list li { font-size:13px; color:var(--muted); display:flex; gap:8px; line-height:1.5; }
-    .legal-list li::before { content:"→"; color:var(--green); font-weight:700; flex-shrink:0; }
+    section.legal { padding:110px 40px; background:var(--bg2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    .legal-container { max-width:1160px; margin:0 auto; }
+    .legal-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    .legal-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:32px 28px; }
+    .legal-icon  { font-size:22px; margin-bottom:16px; filter:grayscale(1); opacity:.55; }
+    .legal-title { font-family:var(--font-display); font-size:16px; font-weight:600; margin-bottom:14px; letter-spacing:-.01em; }
+    .legal-list  { list-style:none; display:flex; flex-direction:column; gap:9px; }
+    .legal-list li { font-size:13px; color:var(--muted); display:flex; gap:9px; line-height:1.55; }
+    .legal-list li::before { content:"→"; color:var(--text); font-weight:600; flex-shrink:0; }
 
     /* ──────────────────────────────────────
        CTA BAND
     ────────────────────────────────────── */
     section.cta-band {
-      padding:100px 24px; text-align:center;
-      background:linear-gradient(135deg,rgba(37,99,235,.1),rgba(16,185,129,.05));
-      border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+      padding:120px 40px; text-align:center;
+      background:#0A0A0A; color:#fff;
+      border-top:none; border-bottom:none;
     }
-    .cta-band h2 { font-size:clamp(28px,4vw,48px); font-weight:900; letter-spacing:-1px; margin-bottom:16px; }
-    .cta-band p  { font-size:18px; color:var(--muted); margin-bottom:40px; }
-    .cta-row { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+    .cta-band .section-label { color:#8C8C8C; }
+    .cta-band h2 { font-family:var(--font-display); font-size:clamp(28px,3.8vw,48px); font-weight:600; letter-spacing:-0.025em; margin-bottom:16px; color:#fff; }
+    .cta-band p  { font-size:16px; color:#9C9C9C; margin-bottom:44px; }
+    .cta-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .cta-band .btn-filled { background:#fff; color:#0A0A0A; }
+    .cta-band .btn-filled:hover { background:#E5E5E5; }
+    .cta-band .btn-outline { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.35); }
+    .cta-band .btn-outline:hover { border-color:#fff; }
 
     /* ──────────────────────────────────────
        FOOTER
     ────────────────────────────────────── */
-    footer { text-align:center; padding:32px 24px; font-size:13px; color:var(--muted2); border-top:1px solid var(--border); }
+    footer { background:#0A0A0A; color:#8C8C8C; font-size:13px; text-align:left; }
+    .footer-top { max-width:1160px; margin:0 auto; padding:72px 40px 56px; display:grid; grid-template-columns:1.2fr 2fr; gap:48px; }
+    .footer-brand .logo { color:#fff; margin-bottom:14px; }
+    .footer-brand .logo span { color:#8C8C8C; }
+    .footer-brand p { font-size:13px; color:#8C8C8C; line-height:1.7; max-width:280px; margin-top:12px; }
+    .footer-cols { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+    .fcol-title { font-size:13px; font-weight:600; color:#fff; margin-bottom:16px; }
+    .fcol a { display:block; font-size:13px; color:#8C8C8C; text-decoration:none; padding:5px 0; transition:color .15s; }
+    .fcol a:hover { color:#fff; }
+    .footer-bottom { border-top:1px solid #1F1F1F; }
+    .footer-bottom-inner { max-width:1160px; margin:0 auto; padding:22px 40px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .footer-social { display:flex; gap:18px; align-items:center; }
+    .footer-social a { color:#8C8C8C; transition:color .15s; display:flex; }
+    .footer-social a:hover { color:#fff; }
+    .footer-social svg { width:17px; height:17px; fill:currentColor; }
 
     /* ──────────────────────────────────────
        MODALS
     ────────────────────────────────────── */
     .overlay {
       display:none; position:fixed; inset:0; z-index:200;
-      background:rgba(0,0,0,.75); backdrop-filter:blur(4px);
+      background:rgba(10,10,10,.45); backdrop-filter:blur(4px);
       align-items:center; justify-content:center; padding:16px;
     }
     .overlay.open { display:flex; animation:fadeIn .2s ease; }
     .modal {
       background:var(--card); border:1px solid var(--border);
-      border-radius:20px; width:100%; max-width:440px;
+      border-radius:8px; width:100%; max-width:430px;
       padding:36px; position:relative;
       animation:fadeUp .25s ease;
-      box-shadow:0 24px 80px rgba(0,0,0,.55);
+      box-shadow:0 24px 80px rgba(10,10,10,.2);
     }
-    .modal h2    { font-size:24px; font-weight:900; margin-bottom:6px; }
-    .modal .msub { font-size:14px; color:var(--muted); margin-bottom:28px; }
+    .modal h2    { font-family:var(--font-display); font-size:23px; font-weight:600; letter-spacing:-.02em; margin-bottom:6px; }
+    .modal .msub { font-size:13px; color:var(--muted); margin-bottom:28px; }
     .field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
-    .field label { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+    .field label { font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
     .field input {
-      background:var(--bg2); border:1.5px solid var(--border); color:var(--text);
-      padding:11px 14px; border-radius:8px; font-size:15px; outline:none;
-      transition:border-color .18s;
+      background:#fff; border:1px solid #D4D4D0; color:var(--text);
+      padding:12px 14px; border-radius:4px; font-size:14px; outline:none;
+      transition:border-color .18s; font-family:inherit;
     }
-    .field input:focus { border-color:var(--primary); }
+    .field input:focus { border-color:var(--text); }
     .role-toggle { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px; }
     .role-btn {
-      padding:12px; border-radius:10px; border:1.5px solid var(--border);
-      background:transparent; color:var(--muted); font-size:14px; font-weight:600;
-      cursor:pointer; transition:all .18s; text-align:center;
+      padding:14px 12px; border-radius:4px; border:1px solid #D4D4D0;
+      background:transparent; color:var(--muted); font-size:13px; font-weight:500;
+      cursor:pointer; transition:all .18s; text-align:center; font-family:inherit;
     }
-    .role-btn.active.buyer  { background:rgba(59,130,246,.15); border-color:var(--primary2); color:var(--primary); }
-    .role-btn.active.seller { background:rgba(16,185,129,.15); border-color:var(--green2);   color:var(--green); }
-    .role-btn .ri { font-size:20px; display:block; margin-bottom:4px; }
+    .role-btn.active.buyer  { background:var(--bg2); border-color:var(--text); color:var(--text); font-weight:600; }
+    .role-btn.active.seller { background:var(--bg2); border-color:var(--text); color:var(--text); font-weight:600; }
+    .role-btn .ri { display:none; }
     .btn-submit {
-      width:100%; padding:13px; border-radius:10px; border:none;
-      background:linear-gradient(135deg,var(--primary2),var(--primary));
-      color:#fff; font-size:16px; font-weight:700; cursor:pointer;
-      margin-top:4px; transition:opacity .2s;
+      width:100%; padding:14px; border-radius:4px; border:none;
+      background:var(--primary);
+      color:#fff; font-size:11px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase;
+      cursor:pointer;
+      margin-top:4px; transition:background .2s; font-family:inherit;
     }
-    .btn-submit:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-submit:hover { background:var(--primary2); }
+    .btn-submit:disabled { opacity:.55; cursor:not-allowed; }
     .modal-switch { text-align:center; margin-top:20px; font-size:13px; color:var(--muted); }
-    .modal-switch a { color:var(--primary); cursor:pointer; font-weight:600; }
+    .modal-switch a { color:var(--text); cursor:pointer; font-weight:600; }
     .modal-switch a:hover { text-decoration:underline; }
     .modal-err {
-      background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
-      color:#fca5a5; border-radius:8px; padding:10px 14px;
+      background:#FEF2F2; border:1px solid #FECACA;
+      color:#B91C1C; border-radius:4px; padding:10px 14px;
       font-size:13px; margin-bottom:14px; display:none;
     }
     .modal-x {
-      position:absolute; top:16px; right:16px; width:32px; height:32px;
-      border-radius:50%; background:var(--border); border:none; color:var(--muted);
-      font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      position:absolute; top:14px; right:14px; width:32px; height:32px;
+      border-radius:4px; background:transparent; border:none; color:var(--muted);
+      font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:background .15s;
     }
+    .modal-x:hover { background:var(--bg2); }
+
+    /* ──────────────────────────────────────
+       NAV MENU / DROPDOWNS
+    ────────────────────────────────────── */
+    .nav-left { display: flex; align-items: center; gap: 36px; }
+    .nav-menu { display: flex; gap: 4px; }
+    .nav-item { position: relative; }
+    .nav-link {
+      background: none; border: none; font-family: inherit; font-size: 13px; font-weight: 500;
+      color: var(--text); padding: 10px 14px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; border-radius: 4px;
+    }
+    .nav-link .caret { font-size: 8px; color: var(--muted2); }
+    .nav-item:hover .nav-link { background: var(--bg2); }
+    .nav-dropdown {
+      position: absolute; top: calc(100% + 8px); left: 0; min-width: 210px;
+      background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px;
+      box-shadow: 0 16px 40px rgba(10,10,10,.1);
+      opacity: 0; visibility: hidden; transform: translateY(6px);
+      transition: all .18s ease; z-index: 150;
+    }
+    .nav-dropdown::before { content:''; position:absolute; top:-8px; left:0; right:0; height:8px; }
+    .nav-item:hover .nav-dropdown, .nav-item:focus-within .nav-dropdown { opacity:1; visibility:visible; transform:translateY(0); }
+    .nav-dropdown a { display:block; padding:9px 12px; font-size:13px; color:var(--text); text-decoration:none; border-radius:4px; font-weight:500; }
+    .nav-dropdown a:hover { background:var(--bg2); }
+
+    /* ──────────────────────────────────────
+       FOUNDERS
+    ────────────────────────────────────── */
+    section.founders { padding:110px 40px; background:var(--bg); }
+    .founders-container { max-width:1160px; margin:0 auto; }
+    .founders-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .founder-card {
+      position:relative; display:block; height:520px; border-radius:8px;
+      overflow:hidden; text-decoration:none; border:1px solid var(--border); background:#0A0A0A;
+    }
+    .founder-card img {
+      width:100%; height:100%; object-fit:cover; object-position:top;
+      filter:grayscale(1) contrast(1.05);
+      transition:transform .5s ease, filter .4s ease, opacity .4s ease;
+    }
+    .founder-card:hover img { transform:scale(1.04); filter:grayscale(.35) contrast(1.02); }
+    .fc-overlay {
+      position:absolute; left:0; right:0; bottom:0; padding:90px 28px 26px;
+      background:linear-gradient(to top, rgba(10,10,10,.9) 20%, rgba(10,10,10,0));
+    }
+    .fc-role { font-size:10px; font-weight:600; letter-spacing:1.8px; text-transform:uppercase; color:rgba(255,255,255,.7); margin-bottom:6px; }
+    .fc-name { font-family:var(--font-display); font-size:28px; font-weight:600; color:#fff; letter-spacing:-.02em; margin-bottom:12px; }
+    .fc-cta { font-size:10px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; color:#fff; opacity:.7; display:inline-flex; align-items:center; gap:7px; transition:opacity .2s, gap .2s; }
+    .founder-card:hover .fc-cta { opacity:1; gap:12px; }
 
     /* ──────────────────────────────────────
        RESPONSIVE
     ────────────────────────────────────── */
+    @media(max-width:900px) {
+      .hero-inner { grid-template-columns:1fr; }
+      .hero-inner p { grid-column:1; grid-row:auto; justify-self:start; margin-bottom:28px; }
+      .hero-btns { grid-row:auto; }
+    }
+    @media(max-width:960px) {
+      .nav-menu { display:none; }
+    }
+    @media(max-width:820px) {
+      .footer-top { grid-template-columns:1fr; padding:56px 24px 40px; }
+      .footer-cols { grid-template-columns:repeat(2,1fr); }
+      .founders-grid { grid-template-columns:1fr; }
+      .founder-card { height:420px; }
+    }
     @media(max-width:768px) {
       nav { padding:0 20px; }
       .how-grid { grid-template-columns:1fr; }
       .legal-grid { grid-template-columns:1fr; }
-      .roadmap-inner { height:280px; }
-      .ms-label { font-size:12px; padding:6px 12px; }
+      .roadmap-inner { height:300px; }
+      .ms-label { font-size:11px; padding:6px 10px; }
     }
   </style>
 </head>
@@ -347,7 +442,31 @@
 
 <!-- NAV -->
 <nav>
-  <div class="logo">Defrost<span>.AI</span></div>
+  <div class="nav-left">
+    <div class="logo">Defrost<span>.AI</span></div>
+    <div class="nav-menu">
+      <div class="nav-item">
+        <button class="nav-link">Company <span class="caret">▼</span></button>
+        <div class="nav-dropdown">
+          <a href="/team">Team</a>
+          <a href="#founders">Our Founders</a>
+          <a href="/founders?f=phu">Phu Quach</a>
+          <a href="/founders?f=bryan">Bryan Tineo</a>
+          <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Careers</a>
+          <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Contact</a>
+        </div>
+      </div>
+      <div class="nav-item">
+        <button class="nav-link">Resources <span class="caret">▼</span></button>
+        <div class="nav-dropdown">
+          <a href="#how">How it works</a>
+          <a href="#legal">Legal protections</a>
+          <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Blog</a>
+          <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Press</a>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="nav-actions">
     <button class="btn-ghost" onclick="openModal('login')">Log in</button>
     <button class="btn-primary-nav" onclick="openModal('signup')">Sign up free</button>
@@ -359,6 +478,7 @@
 ════════════════════════════════════════ -->
 <div class="hero">
   <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="chip">Defrost.AI</span>AI real estate platform · No commission · Always on</div>
     <h1>Navigate real estate with a <span class="hl">trusted AI agent</span></h1>
     <p>
       Tell us what you need once. Your personal AI agent searches, negotiates, and closes the deal on your behalf —
@@ -378,7 +498,7 @@
     <!-- Background map image (absolute inset-0 top-10) -->
     <div class="roadmap-img-wrap">
       <img
-        src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&auto=format&fit=crop&q=60"
+        src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1600&auto=format&fit=crop&q=70"
         alt="Aerial city view"
       />
     </div>
@@ -438,7 +558,7 @@
 <!-- ════════════════════════════════════════
      HOW IT WORKS
 ════════════════════════════════════════ -->
-<section class="works">
+<section class="works" id="how">
   <div class="how-container">
     <div style="text-align:center;margin-bottom:64px;">
       <div class="section-label reveal">How it works</div>
@@ -451,7 +571,7 @@
       <!-- Buyer -->
       <div class="how-track buyer reveal-l">
         <div class="track-header">
-          <div class="track-icon buyer">🏠</div>
+          <div class="track-icon buyer">01</div>
           <div class="track-title">Buying or Renting</div>
           <div class="track-badge buyer">Buyer</div>
         </div>
@@ -489,7 +609,7 @@
       <!-- Seller -->
       <div class="how-track seller reveal-r" style="transition-delay:.15s">
         <div class="track-header">
-          <div class="track-icon seller">📋</div>
+          <div class="track-icon seller">02</div>
           <div class="track-title">Selling or Renting Out</div>
           <div class="track-badge seller">Seller</div>
         </div>
@@ -531,7 +651,7 @@
 <!-- ════════════════════════════════════════
      LEGAL PROTECTIONS
 ════════════════════════════════════════ -->
-<section class="legal">
+<section class="legal" id="legal">
   <div class="legal-container">
     <div style="text-align:center;margin-bottom:64px;">
       <div class="section-label reveal">Legal protections</div>
@@ -581,6 +701,36 @@
 <!-- ════════════════════════════════════════
      CTA
 ════════════════════════════════════════ -->
+<section class="founders" id="founders">
+  <div class="founders-container">
+    <div style="text-align:center;margin-bottom:64px;">
+      <div class="section-label reveal">The team</div>
+      <div class="section-title reveal" style="transition-delay:.1s">Built by two founders.</div>
+      <p class="section-sub reveal" style="margin:0 auto;transition-delay:.2s">
+        Defrost.AI is built by a two-person founding team obsessed with removing the friction — and the commission — from real estate.
+      </p>
+    </div>
+    <div class="founders-grid">
+      <a class="founder-card reveal-l" href="/founders?f=phu">
+        <img src="/images/phu-quach.png" alt="Phu Quach" />
+        <div class="fc-overlay">
+          <div class="fc-role">Co-Founder</div>
+          <div class="fc-name">Phu Quach</div>
+          <div class="fc-cta">Read story <span>→</span></div>
+        </div>
+      </a>
+      <a class="founder-card reveal-r" href="/founders?f=bryan" style="transition-delay:.15s">
+        <img src="/images/bryan-tineo.jpg" alt="Bryan Tineo" />
+        <div class="fc-overlay">
+          <div class="fc-role">Co-Founder</div>
+          <div class="fc-name">Bryan Tineo</div>
+          <div class="fc-cta">Read story <span>→</span></div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
 <section class="cta-band">
   <div style="max-width:640px;margin:0 auto;">
     <div class="section-label reveal" style="display:block;text-align:center;">Get started</div>
@@ -594,8 +744,48 @@
 </section>
 
 <footer>
-  <div class="logo" style="font-size:18px;margin-bottom:8px;">Defrost<span style="color:var(--green)">.AI</span></div>
-  <div>Your personal AI real estate agent. Free to use. Legal protections included.</div>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="logo">Defrost<span>.AI</span></div>
+      <p>Your personal AI real estate agent. Free to use, no commission, legal protections included.</p>
+    </div>
+    <div class="footer-cols">
+      <div class="fcol">
+        <div class="fcol-title">Product</div>
+        <a href="#how">How it works</a>
+        <a href="#legal">Legal protections</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Live listings</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Pricing</a>
+      </div>
+      <div class="fcol">
+        <div class="fcol-title">Company</div>
+        <a href="/team">Team</a>
+        <a href="#founders">Our Founders</a>
+        <a href="/founders?f=phu">Phu Quach</a>
+        <a href="/founders?f=bryan">Bryan Tineo</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Careers</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Contact</a>
+      </div>
+      <div class="fcol">
+        <div class="fcol-title">Resources</div>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Blog</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Press</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Privacy Policy</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Terms of Use</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <div>© 2026 Defrost.AI — All rights reserved.</div>
+      <div class="footer-social">
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener" aria-label="X"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644z"/></svg></a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+      </div>
+    </div>
+  </div>
 </footer>
 
 <!-- SIGNUP MODAL -->
@@ -607,10 +797,10 @@
     <div class="modal-err" id="signup-err"></div>
     <div class="role-toggle">
       <button class="role-btn buyer active" id="role-buyer" onclick="setRole('buyer')">
-        <span class="ri">🏠</span>Buy or Rent
+        Buy or Rent
       </button>
       <button class="role-btn seller" id="role-seller" onclick="setRole('seller')">
-        <span class="ri">📋</span>Sell or Rent Out
+        Sell or Rent Out
       </button>
     </div>
     <div class="field"><label>Full Name</label><input type="text" id="su-name" placeholder="Jane Smith" /></div>

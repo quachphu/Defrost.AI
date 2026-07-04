@@ -21,6 +21,7 @@ import httpx
 from ddgs import DDGS
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from groq import AsyncGroq
 from jose import JWTError, jwt
 from pydantic import BaseModel, Field
@@ -636,3 +637,13 @@ async def landing() -> FileResponse:
 @app.get("/app")
 async def app_view() -> FileResponse:
     return FileResponse(STATIC_DIR / "rent_vs_buy.html")
+
+@app.get("/founders")
+async def founders_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "founders.html")
+
+@app.get("/team")
+async def team_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "team.html")
+
+app.mount("/images", StaticFiles(directory=STATIC_DIR / "images"), name="images")

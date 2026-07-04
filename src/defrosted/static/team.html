@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team — Defrost.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #FFFFFF; --bg2: #F5F5F3; --card: #FFFFFF;
+      --border: #E5E5E2; --primary: #0A0A0A; --primary2: #262626;
+      --text: #0A0A0A; --muted: #6B6B6B; --muted2: #9C9C9C;
+      --font-display: 'Inter Tight', 'Inter', -apple-system, sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-left { display: flex; align-items: center; gap: 36px; }
+    .logo { font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text); text-decoration: none; }
+    .logo span { color: var(--muted2); }
+    .nav-menu { display: flex; gap: 4px; }
+    .nav-item { position: relative; }
+    .nav-link {
+      background: none; border: none; font-family: inherit; font-size: 13px; font-weight: 500;
+      color: var(--text); padding: 10px 14px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; border-radius: 4px;
+    }
+    .nav-link .caret { font-size: 8px; color: var(--muted2); }
+    .nav-item:hover .nav-link { background: var(--bg2); }
+    .nav-dropdown {
+      position: absolute; top: calc(100% + 8px); left: 0; min-width: 210px;
+      background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px;
+      box-shadow: 0 16px 40px rgba(10,10,10,.1);
+      opacity: 0; visibility: hidden; transform: translateY(6px);
+      transition: all .18s ease; z-index: 150;
+    }
+    .nav-dropdown::before { content:''; position:absolute; top:-8px; left:0; right:0; height:8px; }
+    .nav-item:hover .nav-dropdown, .nav-item:focus-within .nav-dropdown { opacity:1; visibility:visible; transform:translateY(0); }
+    .nav-dropdown a { display:block; padding:9px 12px; font-size:13px; color:var(--text); text-decoration:none; border-radius:4px; font-weight:500; }
+    .nav-dropdown a:hover { background:var(--bg2); }
+    .nav-actions { display: flex; gap: 8px; align-items: center; }
+    .btn-ghost {
+      background: transparent; border: none; color: var(--text); text-decoration: none;
+      padding: 9px 16px; border-radius: 4px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: opacity .2s; font-family: inherit;
+      display: inline-flex; align-items: center;
+    }
+    .btn-ghost:hover { opacity: .6; }
+    .btn-primary-nav {
+      background: var(--primary); border: none; color: #fff; text-decoration: none;
+      padding: 10px 20px; border-radius: 4px; font-size: 11px; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; transition: background .2s; font-family: inherit;
+      display: inline-flex; align-items: center;
+    }
+    .btn-primary-nav:hover { background: var(--primary2); }
+
+    /* ── Page header ── */
+    .team-hero { max-width: 1160px; margin: 0 auto; padding: 150px 40px 64px; }
+    .team-label { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 14px; animation: fadeUp .6s ease both; }
+    .team-hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(36px, 5vw, 60px); font-weight: 600;
+      letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 20px; max-width: 700px;
+      animation: fadeUp .6s ease .1s both;
+    }
+    .team-hero p { font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 520px; animation: fadeUp .6s ease .2s both; }
+
+    .team-section { max-width: 1160px; margin: 0 auto; padding: 0 40px 96px; }
+    .sec-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase;
+      color: var(--muted2); margin: 0 0 20px; padding-top: 40px; border-top: 1px solid var(--border);
+    }
+
+    /* Founder cards (large) */
+    .founders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+    .founder-card {
+      position: relative; display: block; height: 480px; border-radius: 8px;
+      overflow: hidden; text-decoration: none; border: 1px solid var(--border); background: #EAEAE7;
+    }
+    .founder-card img {
+      width: 100%; height: 100%; object-fit: cover; object-position: top;
+      filter: grayscale(1) contrast(1.05);
+      transition: transform .5s ease, filter .4s ease;
+    }
+    .founder-card:hover img { transform: scale(1.04); filter: grayscale(.35) contrast(1.02); }
+    .fc-overlay {
+      position: absolute; left: 0; right: 0; bottom: 0; padding: 90px 28px 26px;
+      background: linear-gradient(to top, rgba(10,10,10,.9) 20%, rgba(10,10,10,0));
+    }
+    .fc-role { font-size: 10px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: rgba(255,255,255,.7); margin-bottom: 6px; }
+    .fc-name { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: #fff; letter-spacing: -.02em; margin-bottom: 12px; }
+    .fc-cta { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #fff; opacity: .7; display: inline-flex; align-items: center; gap: 7px; transition: opacity .2s, gap .2s; }
+    .founder-card:hover .fc-cta { opacity: 1; gap: 12px; }
+
+    /* Team member cards */
+    .members-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .member-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .member-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(10,10,10,.08); border-color: #C4C4C0; }
+    .member-photo { aspect-ratio: 1 / 1; overflow: hidden; background: #EAEAE7; }
+    .member-photo img {
+      width: 100%; height: 100%; object-fit: cover;
+      filter: grayscale(1) contrast(1.05);
+      transition: filter .4s ease, transform .5s ease;
+    }
+    .member-card:hover .member-photo img { filter: grayscale(.35); transform: scale(1.03); }
+    .member-body { padding: 16px 18px 18px; }
+    .member-name { font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: -.01em; margin-bottom: 3px; }
+    .member-role { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .member-bio { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    /* Join CTA */
+    .join-band { background: #0A0A0A; color: #fff; text-align: center; padding: 96px 40px; }
+    .join-band .sec-label-dark { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #8C8C8C; margin-bottom: 14px; }
+    .join-band h2 { font-family: var(--font-display); font-size: clamp(26px, 3.4vw, 42px); font-weight: 600; letter-spacing: -.025em; margin-bottom: 16px; }
+    .join-band p { font-size: 15px; color: #9C9C9C; margin-bottom: 36px; }
+    .join-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 48px; padding: 0 30px; border-radius: 4px; text-decoration: none;
+      background: #fff; color: #0A0A0A;
+      font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+      transition: background .2s;
+    }
+    .join-btn:hover { background: #E5E5E5; }
+
+    /* ── Footer ── */
+    footer { background:#0A0A0A; color:#8C8C8C; font-size:13px; border-top:1px solid #1F1F1F; }
+    .footer-top { max-width:1160px; margin:0 auto; padding:72px 40px 56px; display:grid; grid-template-columns:1.2fr 2fr; gap:48px; }
+    .footer-brand .logo { color:#fff; font-size:15px; margin-bottom:14px; display:inline-block; }
+    .footer-brand .logo span { color:#8C8C8C; }
+    .footer-brand p { font-size:13px; color:#8C8C8C; line-height:1.7; max-width:280px; margin-top:12px; }
+    .footer-cols { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+    .fcol-title { font-size:13px; font-weight:600; color:#fff; margin-bottom:16px; }
+    .fcol a { display:block; font-size:13px; color:#8C8C8C; text-decoration:none; padding:5px 0; transition:color .15s; }
+    .fcol a:hover { color:#fff; }
+    .footer-bottom { border-top:1px solid #1F1F1F; }
+    .footer-bottom-inner { max-width:1160px; margin:0 auto; padding:22px 40px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .footer-social { display:flex; gap:18px; align-items:center; }
+    .footer-social a { color:#8C8C8C; transition:color .15s; display:flex; }
+    .footer-social a:hover { color:#fff; }
+    .footer-social svg { width:17px; height:17px; fill:currentColor; }
+
+    @media(max-width:960px) {
+      .nav-menu { display:none; }
+      .founders-grid { grid-template-columns:1fr; }
+      .founder-card { height:420px; }
+      .members-grid { grid-template-columns:repeat(2,1fr); }
+      .footer-top { grid-template-columns:1fr; }
+      .footer-cols { grid-template-columns:repeat(2,1fr); }
+    }
+    @media(max-width:560px) {
+      .members-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a class="logo" href="/">Defrost<span>.AI</span></a>
+    <div class="nav-menu">
+      <div class="nav-item">
+        <button class="nav-link">Company <span class="caret">▼</span></button>
+        <div class="nav-dropdown">
+          <a href="/team">Team</a>
+          <a href="/#founders">Our Founders</a>
+          <a href="/founders?f=phu">Phu Quach</a>
+          <a href="/founders?f=bryan">Bryan Tineo</a>
+          <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Careers</a>
+          <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Contact</a>
+        </div>
+      </div>
+      <div class="nav-item">
+        <button class="nav-link">Resources <span class="caret">▼</span></button>
+        <div class="nav-dropdown">
+          <a href="/#how">How it works</a>
+          <a href="/#legal">Legal protections</a>
+          <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Blog</a>
+          <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Press</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nav-actions">
+    <a class="btn-ghost" href="/">Home</a>
+    <a class="btn-primary-nav" href="/">Get started</a>
+  </div>
+</nav>
+
+<div class="team-hero">
+  <div class="team-label">The Team</div>
+  <h1>The people building your AI real estate agent.</h1>
+  <p>A small, technical team obsessed with removing the friction — and the commission — from renting, buying, and selling a home.</p>
+</div>
+
+<div class="team-section">
+  <div class="sec-label">Founders</div>
+  <div class="founders-grid">
+    <a class="founder-card" href="/founders?f=phu">
+      <img src="/images/phu-quach.png" alt="Phu Quach" />
+      <div class="fc-overlay">
+        <div class="fc-role">Co-Founder</div>
+        <div class="fc-name">Phu Quach</div>
+        <div class="fc-cta">Read story <span>→</span></div>
+      </div>
+    </a>
+    <a class="founder-card" href="/founders?f=bryan">
+      <img src="/images/bryan-tineo.jpg" alt="Bryan Tineo" />
+      <div class="fc-overlay">
+        <div class="fc-role">Co-Founder</div>
+        <div class="fc-name">Bryan Tineo</div>
+        <div class="fc-cta">Read story <span>→</span></div>
+      </div>
+    </a>
+  </div>
+
+  <div class="sec-label">Team</div>
+  <div class="members-grid">
+    <div class="member-card">
+      <div class="member-photo"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sofia Ramirez" loading="lazy" /></div>
+      <div class="member-body">
+        <div class="member-name">Sofia Ramirez</div>
+        <div class="member-role">Founding Engineer</div>
+        <div class="member-bio">Builds the agent runtime and the negotiation engine that connects buyer and seller agents in real time.</div>
+      </div>
+    </div>
+    <div class="member-card">
+      <div class="member-photo"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Daniel Park" loading="lazy" /></div>
+      <div class="member-body">
+        <div class="member-name">Daniel Park</div>
+        <div class="member-role">AI Research Engineer</div>
+        <div class="member-bio">Works on the screening and rent-vs-buy analysis models, and evaluates every agent conversation for accuracy.</div>
+      </div>
+    </div>
+    <div class="member-card">
+      <div class="member-photo"><img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Maya Patel" loading="lazy" /></div>
+      <div class="member-body">
+        <div class="member-name">Maya Patel</div>
+        <div class="member-role">Product Designer</div>
+        <div class="member-bio">Designs the experience end to end — from the first chat with your agent to the day you sign.</div>
+      </div>
+    </div>
+    <div class="member-card">
+      <div class="member-photo"><img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Ethan Cole" loading="lazy" /></div>
+      <div class="member-body">
+        <div class="member-name">Ethan Cole</div>
+        <div class="member-role">Data Engineer</div>
+        <div class="member-bio">Owns the live listings pipeline — ingesting, deduplicating, and enriching properties across every market we serve.</div>
+      </div>
+    </div>
+    <div class="member-card">
+      <div class="member-photo"><img src="https://randomuser.me/api/portraits/women/17.jpg" alt="Grace Liu" loading="lazy" /></div>
+      <div class="member-body">
+        <div class="member-name">Grace Liu</div>
+        <div class="member-role">Growth &amp; Partnerships</div>
+        <div class="member-bio">Partners with landlords, brokerages, and platforms to bring more inventory to Defrost.AI users.</div>
+      </div>
+    </div>
+    <div class="member-card">
+      <div class="member-photo"><img src="https://randomuser.me/api/portraits/men/85.jpg" alt="Marcus Webb" loading="lazy" /></div>
+      <div class="member-body">
+        <div class="member-name">Marcus Webb</div>
+        <div class="member-role">Legal &amp; Compliance</div>
+        <div class="member-bio">Makes sure every lease and purchase agreement the agents produce is legally sound in every state.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="join-band">
+  <div class="sec-label-dark">Join us</div>
+  <h2>Want to help fix real estate?</h2>
+  <p>We're a small team taking on a massive industry — and we're hiring.</p>
+  <a class="join-btn" href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">See open roles</a>
+</div>
+
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a class="logo" href="/">Defrost<span>.AI</span></a>
+      <p>Your personal AI real estate agent. Free to use, no commission, legal protections included.</p>
+    </div>
+    <div class="footer-cols">
+      <div class="fcol">
+        <div class="fcol-title">Product</div>
+        <a href="/#how">How it works</a>
+        <a href="/#legal">Legal protections</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Live listings</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Pricing</a>
+      </div>
+      <div class="fcol">
+        <div class="fcol-title">Company</div>
+        <a href="/team">Team</a>
+        <a href="/#founders">Our Founders</a>
+        <a href="/founders?f=phu">Phu Quach</a>
+        <a href="/founders?f=bryan">Bryan Tineo</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Careers</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Contact</a>
+      </div>
+      <div class="fcol">
+        <div class="fcol-title">Resources</div>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Blog</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Press</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Privacy Policy</a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener">Terms of Use</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <div>© 2026 Defrost.AI — All rights reserved.</div>
+      <div class="footer-social">
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener" aria-label="X"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644z"/></svg></a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+        <a href="https://www.linkedin.com/company/defrostedai" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
