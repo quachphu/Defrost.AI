@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -444,6 +446,106 @@
     .modal-interest-btn:hover { background:var(--blue); }
     .modal-interest-btn.sent { background:#F0FDF4; color:var(--green); border:1px solid #BBE3C8; cursor:default; }
 
+    /* ── Map view ── */
+    #map-overlay { display:none; position:fixed; top:58px; left:0; right:0; bottom:0; z-index:95; background:var(--bg); }
+    #map-overlay.open { display:flex; }
+    #df-map { flex:1; height:100%; background:#EDEDEB; }
+    #df-map .leaflet-tile-pane { filter:grayscale(1) contrast(1.02); }
+    .price-pin {
+      background:#fff; border:1.5px solid #0A0A0A; color:#0A0A0A;
+      font-family:'Inter',-apple-system,sans-serif; font-size:12px; font-weight:700;
+      padding:5px 11px; border-radius:999px; white-space:nowrap;
+      box-shadow:0 3px 10px rgba(10,10,10,.28); display:inline-block;
+      transform:translate(-50%,-120%); cursor:pointer;
+      transition:background .12s, color .12s, box-shadow .12s;
+    }
+    .price-pin:hover { background:#0A0A0A; color:#fff; }
+    .price-pin.sel {
+      background:#0A0A0A; color:#fff;
+      box-shadow:0 0 0 4px rgba(10,10,10,.18), 0 4px 14px rgba(10,10,10,.35);
+    }
+    /* Map popup preview card */
+    #df-map .leaflet-popup-content-wrapper { border-radius:10px; border:1px solid var(--border); box-shadow:0 16px 40px rgba(10,10,10,.22); padding:0; overflow:hidden; }
+    #df-map .leaflet-popup-content { margin:0; width:250px !important; font-family:'Inter',-apple-system,sans-serif; }
+    #df-map .leaflet-popup-tip { box-shadow:0 2px 8px rgba(10,10,10,.15); }
+    #df-map .leaflet-popup-close-button { display:none; }
+    .map-pop-ph { height:120px; background:#EDEDEB; display:flex; align-items:center; justify-content:center; font-size:28px; overflow:hidden; }
+    .map-pop-ph img { width:100%; height:100%; object-fit:cover; display:block; }
+    .map-pop-ph > span { filter:grayscale(1); opacity:.4; }
+    .map-pop-body { padding:12px 14px 14px; }
+    .map-pop-price { font-family:var(--font-display); font-size:18px; font-weight:600; letter-spacing:-.01em; color:var(--text); }
+    .map-pop-price.rent::after { content:"/mo"; font-size:11px; color:var(--muted); font-weight:500; }
+    .map-pop-meta { font-size:11px; color:var(--muted); font-weight:500; margin-top:2px; }
+    .map-pop-addr { font-size:10px; color:var(--muted2); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .map-pop-btn {
+      width:100%; margin-top:10px; padding:8px; background:var(--text); color:#fff; border:none;
+      border-radius:4px; font-size:10px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+      cursor:pointer; font-family:inherit; transition:background .15s;
+    }
+    .map-pop-btn:hover { background:#333; }
+    /* Floating back button over the map */
+    #map-back {
+      position:absolute; top:14px; left:56px; z-index:1100;
+      display:inline-flex; align-items:center; gap:8px;
+      background:#0A0A0A; color:#fff; border:none; border-radius:999px;
+      padding:11px 20px; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+      cursor:pointer; font-family:inherit; box-shadow:0 6px 20px rgba(10,10,10,.3);
+      transition:background .15s, transform .15s;
+    }
+    #map-back:hover { background:#262626; transform:translateY(-1px); }
+    /* Segmented List | Map control */
+    .seg { display:inline-flex; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:3px; gap:2px; }
+    .seg button {
+      border:none; background:transparent; font-family:inherit; cursor:pointer;
+      font-size:10px; font-weight:600; letter-spacing:.8px; text-transform:uppercase;
+      color:var(--muted); padding:7px 14px; border-radius:4px; transition:all .15s;
+    }
+    .seg button.on { background:#0A0A0A; color:#fff; }
+    .user-dot {
+      width:16px; height:16px; border-radius:50%; background:#0A0A0A;
+      border:3px solid #fff; box-shadow:0 0 0 2px #0A0A0A, 0 0 0 10px rgba(10,10,10,.12);
+    }
+    #map-side { width:410px; flex-shrink:0; border-left:1px solid var(--border); background:var(--bg2); display:flex; flex-direction:column; }
+    .map-side-hdr {
+      padding:12px 16px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between; gap:8px; background:#fff; flex-shrink:0;
+    }
+    #map-count { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .map-hdr-btns { display:flex; gap:6px; flex-shrink:0; }
+    .map-hdr-btn {
+      border:1px solid var(--border); background:#fff; border-radius:4px; padding:7px 12px;
+      font-size:9.5px; font-weight:600; letter-spacing:.8px; text-transform:uppercase;
+      cursor:pointer; font-family:inherit; transition:all .15s; color:var(--text);
+    }
+    .map-hdr-btn:hover { border-color:var(--text); }
+    .map-hdr-btn.dark { background:var(--text); color:#fff; border-color:var(--text); }
+    .map-hdr-btn.dark:hover { background:#333; }
+    #map-list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
+    #map-list::-webkit-scrollbar { width:4px; }
+    #map-list::-webkit-scrollbar-thumb { background:#D6D6D2; border-radius:2px; }
+    .mcard {
+      display:flex; gap:12px; background:#fff; border:1px solid var(--border); border-radius:8px;
+      overflow:hidden; cursor:pointer; transition:border-color .15s; flex-shrink:0;
+    }
+    .mcard:hover { border-color:var(--text); }
+    .mcard.sel { border-color:var(--text); box-shadow:0 0 0 1.5px var(--text), 0 8px 24px rgba(10,10,10,.1); }
+    @keyframes cardFlash { 0%,100%{ background:#fff; } 40%{ background:#F0F0EC; } }
+    .mcard.flash { animation:cardFlash 1s ease; }
+    .mcard-ph { width:122px; height:94px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:24px; overflow:hidden; }
+    .mcard-ph img { width:100%; height:100%; object-fit:cover; }
+    .mcard-ph > span { filter:grayscale(1); opacity:.4; }
+    .mcard-body { padding:11px 12px 11px 0; min-width:0; }
+    .mcard-price { font-family:var(--font-display); font-size:16px; font-weight:600; letter-spacing:-.01em; }
+    .mcard-price.rent::after { content:"/mo"; font-size:10px; color:var(--muted); font-weight:500; letter-spacing:0; }
+    .mcard-meta { font-size:11px; color:var(--muted); margin-top:3px; font-weight:500; }
+    .mcard-addr { font-size:10px; color:var(--muted2); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .map-empty { text-align:center; color:var(--muted); font-size:13px; padding:40px 16px; }
+    @media(max-width:800px) {
+      #map-overlay.open { flex-direction:column; }
+      #df-map { height:48%; flex:none; }
+      #map-side { width:100%; flex:1; border-left:none; border-top:1px solid var(--border); }
+    }
+
     @media(max-width:900px) {
       .chat-panel { width:260px; }
     }
@@ -572,6 +674,7 @@
             <div class="listing-tabs">
               <button class="ltab active" id="tab-primary" onclick="switchTab('primary')">—</button>
               <button class="ltab" id="tab-other" onclick="switchTab('other')">—</button>
+              <button class="ltab" id="tab-map" onclick="openMap()" style="margin-left:auto;">Map view</button>
             </div>
             <div id="listings-wrap"></div>
           </div>
@@ -666,6 +769,27 @@
     <div class="pp-listings-grid" id="pp-listings-grid">
       <div class="pp-empty" style="grid-column:1/-1;">No listings saved yet.<br>Complete your analysis to cache results.</div>
     </div>
+  </div>
+</div>
+
+<!-- MAP VIEW -->
+<div id="map-overlay">
+  <div style="position:relative; flex:1; display:flex;">
+    <div id="df-map"></div>
+    <button id="map-back" onclick="closeMap()">← Back to results</button>
+  </div>
+  <div id="map-side">
+    <div class="map-side-hdr">
+      <span id="map-count">Listings</span>
+      <div class="map-hdr-btns">
+        <button class="map-hdr-btn" onclick="locateUser(true)">◎ Near me</button>
+        <div class="seg">
+          <button onclick="closeMap()">List</button>
+          <button class="on">Map</button>
+        </div>
+      </div>
+    </div>
+    <div id="map-list"></div>
   </div>
 </div>
 
@@ -1336,6 +1460,7 @@ function renderGrid(listings, type) {
   }
   wrap.innerHTML = `<div class="listings-grid">${listings.map((l,i)=>card(l,i,isRent)).join('')}</div>`;
   listings.forEach((l,i) => fetchPhoto(l.address, i));
+  if (mapOpen) renderMapView();
 }
 
 async function fetchPhoto(address, idx) {
@@ -1346,6 +1471,8 @@ async function fetchPhoto(address, idx) {
     if (!d.photo_url) return;
     const cp = document.getElementById(`cp-${idx}`);
     if (cp) cp.innerHTML = `<img src="${d.photo_url}" alt="listing" style="width:100%;height:100%;object-fit:cover;">`;
+    const mph = document.getElementById(`mph-${idx}`);
+    if (mph) mph.innerHTML = `<img src="${d.photo_url}" alt="">`;
     if (currentListings[idx]) currentListings[idx].photo_url = d.photo_url;
   } catch {}
 }
@@ -1580,8 +1707,128 @@ async function updateInterest(id, status, btn) {
   } catch {}
 }
 
+/* ── Map view ── */
+let map = null, mapOpen = false, pins = [], userPos = null, userMarker = null;
+
+const pinPrice = p => !p ? '—'
+  : p >= 1e6   ? '$' + (p / 1e6).toFixed(1) + 'M'
+  : p >= 10000 ? '$' + Math.round(p / 1000) + 'K'
+  : '$' + Number(p).toLocaleString();
+
+function openMap() {
+  document.getElementById('map-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  mapOpen = true;
+  if (!map) {
+    map = L.map('df-map');
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+    map.setView([39.5, -98.35], 4);
+  }
+  setTimeout(() => map.invalidateSize(), 60);
+  renderMapView();
+  locateUser(false);
+}
+
+function closeMap() {
+  document.getElementById('map-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  mapOpen = false;
+}
+
+function locateUser(recenter) {
+  if (!navigator.geolocation || !map) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    userPos = [pos.coords.latitude, pos.coords.longitude];
+    if (userMarker) userMarker.remove();
+    userMarker = L.marker(userPos, {
+      icon: L.divIcon({ className: '', html: '<div class="user-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }),
+      title: 'You are here', zIndexOffset: 500,
+    }).addTo(map).bindPopup('<b>You are here</b>');
+    if (recenter) map.setView(userPos, 13);
+  }, () => {}, { enableHighAccuracy: false, timeout: 8000 });
+}
+
+function renderMapView() {
+  if (!map) return;
+  const listings = currentListings || [];
+  const isRent = listings[0]?.listing_type === 'rent';
+  pins.forEach(pn => pn.remove()); pins = [];
+  const pts = [];
+  listings.forEach((l, i) => {
+    if (!(l.latitude && l.longitude)) return;
+    const mk = L.marker([l.latitude, l.longitude], {
+      icon: L.divIcon({ className: '', html: `<div class="price-pin" id="pin-${i}">${pinPrice(l.price)}</div>`, iconSize: [0, 0] }),
+    }).addTo(map);
+    mk.bindPopup(() => popupCard(i), { offset: [0, -34], closeButton: false, autoPanPadding: [40, 40] });
+    mk.on('click', () => selectPin(i));
+    mk.on('popupclose', () => {
+      const pn = document.getElementById('pin-' + i);
+      if (pn) pn.classList.remove('sel');
+      const c = document.getElementById('mc-' + i);
+      if (c) c.classList.remove('sel');
+    });
+    pins.push(mk); pts.push([l.latitude, l.longitude]);
+  });
+  if (pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 15 });
+  else if (userPos) map.setView(userPos, 12);
+
+  document.getElementById('map-count').textContent =
+    `${listings.length} ${isRent ? 'rentals' : 'homes'}${currentCity ? ' · ' + currentCity : ''}`;
+  document.getElementById('map-list').innerHTML = listings.length ? listings.map((l, i) => {
+    const icon = ICONS[l.property_type] || '🏠', th = THEMES[i % THEMES.length];
+    const ph = l.photo_url ? `<img src="${l.photo_url}" alt="">` : `<span>${icon}</span>`;
+    const meta = [l.beds ? l.beds + ' bd' : '', l.baths ? l.baths + ' ba' : '', l.sqft ? Number(l.sqft).toLocaleString() + ' sqft' : ''].filter(Boolean).join(' · ');
+    return `<div class="mcard" id="mc-${i}" onclick="openModal(${i})" onmouseenter="hoverPin(${i},true)" onmouseleave="hoverPin(${i},false)">
+      <div class="mcard-ph ${l.photo_url ? '' : th}" id="mph-${i}">${ph}</div>
+      <div class="mcard-body">
+        <div class="mcard-price ${isRent ? 'rent' : ''}">${l.price ? fmt(l.price) : '—'}</div>
+        <div class="mcard-meta">${meta}</div>
+        <div class="mcard-addr">${l.address || ''}</div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="map-empty">No listings yet — run your analysis first, then browse them on the map.</div>';
+}
+
+function hoverPin(i, on) {
+  const pn = document.getElementById('pin-' + i);
+  if (pn) pn.classList.toggle('sel', on);
+}
+
+function popupCard(i) {
+  const l = currentListings[i];
+  if (!l) return '';
+  const isRent = l.listing_type === 'rent';
+  const icon = ICONS[l.property_type] || '🏠';
+  const ph = l.photo_url ? `<img src="${l.photo_url}" alt="">` : `<span>${icon}</span>`;
+  const meta = [l.beds ? l.beds + ' bd' : '', l.baths ? l.baths + ' ba' : '', l.sqft ? Number(l.sqft).toLocaleString() + ' sqft' : ''].filter(Boolean).join(' · ');
+  return `<div class="map-pop-ph">${ph}</div>
+    <div class="map-pop-body">
+      <div class="map-pop-price ${isRent ? 'rent' : ''}">${l.price ? fmt(l.price) : '—'}</div>
+      <div class="map-pop-meta">${meta}</div>
+      <div class="map-pop-addr">${l.address || ''}</div>
+      <button class="map-pop-btn" onclick="openModal(${i})">View full details</button>
+    </div>`;
+}
+
+function selectPin(i) {
+  document.querySelectorAll('.price-pin.sel').forEach(e => e.classList.remove('sel'));
+  document.querySelectorAll('.mcard.sel, .mcard.flash').forEach(e => e.classList.remove('sel', 'flash'));
+  const pn = document.getElementById('pin-' + i);
+  if (pn) pn.classList.add('sel');
+  const c = document.getElementById('mc-' + i);
+  if (c) {
+    c.classList.add('sel', 'flash');
+    c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => c.classList.remove('flash'), 1100);
+  }
+}
+
 document.addEventListener('keydown', e => {
-  if (e.key==='Escape') closeModal();
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('listing-modal').classList.contains('open')) closeModal();
+  else closeMap();
 });
 </script>
 </body>

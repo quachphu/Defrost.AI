@@ -646,4 +646,12 @@ async def founders_view() -> FileResponse:
 async def team_view() -> FileResponse:
     return FileResponse(STATIC_DIR / "team.html")
 
+@app.get("/laws")
+async def laws_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "laws.html")
+
+@app.get("/company")
+async def company_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "company.html")
+
 app.mount("/images", StaticFiles(directory=STATIC_DIR / "images"), name="images")
