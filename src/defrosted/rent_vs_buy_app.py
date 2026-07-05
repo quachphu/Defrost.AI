@@ -19,8 +19,8 @@ from datetime import datetime, timedelta, timezone
 import asyncpg
 import httpx
 from ddgs import DDGS
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi import Body, Depends, FastAPI, Header, HTTPException, Query
+from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from groq import AsyncGroq
 from jose import JWTError, jwt
@@ -653,5 +653,114 @@ async def laws_view() -> FileResponse:
 @app.get("/company")
 async def company_view() -> FileResponse:
     return FileResponse(STATIC_DIR / "company.html")
+
+# ── Marketing pages ────────────────────────────────────────────────────────────
+
+@app.get("/how-it-works")
+async def how_it_works_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "how-it-works.html")
+
+@app.get("/pricing")
+async def pricing_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "pricing.html")
+
+@app.get("/careers")
+async def careers_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "careers.html")
+
+@app.get("/contact")
+async def contact_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "contact.html")
+
+@app.get("/help")
+async def help_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "help.html")
+
+# Blog: add new posts as static/blog/<slug>.html + list the slug here + a card in blog.html.
+BLOG_SLUGS = {
+    "how-to-negotiate-rent",
+    "california-renter-rights-2026",
+    "who-does-your-rental-platform-work-for",
+}
+
+@app.get("/blog")
+async def blog_index_view() -> FileResponse:
+    return FileResponse(STATIC_DIR / "blog.html")
+
+@app.get("/blog/{slug}")
+async def blog_post_view(slug: str) -> FileResponse:
+    if slug not in BLOG_SLUGS:
+        raise HTTPException(404, "Post not found")
+    return FileResponse(STATIC_DIR / "blog" / f"{slug}.html")
+
+LEGAL_PAGES = {"terms", "privacy", "cookies", "fair-housing", "accessibility", "security"}
+
+@app.get("/legal/{page}")
+async def legal_view(page: str) -> FileResponse:
+    if page not in LEGAL_PAGES:
+        raise HTTPException(404, "Page not found")
+    return FileResponse(STATIC_DIR / "legal" / f"{page}.html")
+
+# ── Shared assets, SEO files ───────────────────────────────────────────────────
+
+@app.get("/site.css")
+async def site_css() -> FileResponse:
+    return FileResponse(STATIC_DIR / "site.css", media_type="text/css")
+
+@app.get("/site.js")
+async def site_js() -> FileResponse:
+    return FileResponse(STATIC_DIR / "site.js", media_type="text/javascript")
+
+# Public base URL for absolute links in sitemap/robots. Set SITE_BASE_URL in .env
+# once the production domain is confirmed. [[PLACEHOLDER: canonical domain]]
+SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "http://localhost:8000").rstrip("/")
+
+_SITEMAP_PATHS = [
+    "/", "/how-it-works", "/pricing", "/company", "/team", "/laws",
+    "/blog", *(f"/blog/{s}" for s in sorted(BLOG_SLUGS)),
+    "/careers", "/contact", "/help",
+    *(f"/legal/{p}" for p in sorted(LEGAL_PAGES)),
+]
+
+@app.get("/sitemap.xml")
+async def sitemap() -> Response:
+    urls = "\n".join(
+        f"  <url><loc>{SITE_BASE_URL}{path}</loc></url>" for path in _SITEMAP_PATHS
+    )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{urls}\n</urlset>\n"
+    )
+    return Response(content=xml, media_type="application/xml")
+
+@app.get("/robots.txt")
+async def robots() -> PlainTextResponse:
+    return PlainTextResponse(
+        f"User-agent: *\nAllow: /\nDisallow: /app\nSitemap: {SITE_BASE_URL}/sitemap.xml\n"
+    )
+
+# ── Marketing form intake (PLACEHOLDER) ────────────────────────────────────────
+# Validates and logs submissions but does not deliver them anywhere yet.
+# Swap for a real destination (email service / ATS / CRM) before launch.
+
+MARKETING_FORMS = {"contact", "careers"}
+
+@app.post("/api/forms/{form_name}")
+async def submit_marketing_form(form_name: str, payload: dict = Body(...)) -> dict:
+    if form_name not in MARKETING_FORMS:
+        raise HTTPException(404, "Unknown form")
+    fields = payload.get("fields")
+    if not isinstance(fields, dict):
+        raise HTTPException(422, "Missing fields")
+    email = str(fields.get("email", "")).strip()
+    if "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(422, "A valid email is required")
+    if not str(fields.get("message", "")).strip():
+        raise HTTPException(422, "A message is required")
+    if not str(fields.get("name", "")).strip():
+        raise HTTPException(422, "A name is required")
+    print(f"[form:{form_name}] {json.dumps(fields)[:2000]}")  # TODO: deliver somewhere real
+    return {"ok": True, "note": "placeholder endpoint — submission logged only"}
 
 app.mount("/images", StaticFiles(directory=STATIC_DIR / "images"), name="images")
